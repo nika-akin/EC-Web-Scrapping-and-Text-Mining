@@ -26,14 +26,19 @@
 
 
 
-### Summary Web-Scrapping
+## Summary Web-Scrapping
 
-- based on Selenium 
+- web scraping with *Selenium* and [Chrome driver](https://chromedriver.chromium.org/downloads)
 
 ```bash
 pip install selenium
 ```
-- [Chrome driver](https://chromedriver.chromium.org/downloads)
-
-
+- Data parsing from pdf-documents
+```bash
+pip install pdfplumber
+```
+- Translation of multilingual text with deepl
+```bash
+pip install deep-translator
+```
 
