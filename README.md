@@ -33,10 +33,11 @@
 ```bash
 pip install selenium
 ```
-- Parsing pdf-documents
+- Parsing pdf-documents and html (*BeautifulSoup*)
 ```bash
 pip install pdfplumber
 ```
+
 - Translation of multilingual text with deepl
 ```bash
 pip install deep-translator
