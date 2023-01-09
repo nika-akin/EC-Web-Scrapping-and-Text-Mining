@@ -1,6 +1,11 @@
 
 # Code and Data for Web-Scraping EC Initiatives and Text Mining
-## Data 
+
+- The pdf-documents are in the data folder
+- Descriptives and Data exploration: explore.ipynb
+- Analysis: analysis.ipynb
+
+## Summary Data 
 (Status: 07/01/2023)
 
 
@@ -21,4 +26,5 @@
 
 
 
-### Summary
+### Summary Web-Scrapping
+
