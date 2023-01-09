@@ -36,6 +36,7 @@ pip install selenium
 - Parsing pdf-documents and html (*BeautifulSoup*)
 ```bash
 pip install pdfplumber
+pip install PyPDF2
 ```
 
 - Translation of multilingual text with deepl
