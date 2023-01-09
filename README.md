@@ -28,3 +28,12 @@
 
 ### Summary Web-Scrapping
 
+- based on Selenium 
+
+```bash
+pip install selenium
+```
+- [Chrome driver](https://chromedriver.chromium.org/downloads)
+
+
+
