@@ -33,7 +33,7 @@
 ```bash
 pip install selenium
 ```
-- Data parsing from pdf-documents
+- Parsing pdf-documents
 ```bash
 pip install pdfplumber
 ```
