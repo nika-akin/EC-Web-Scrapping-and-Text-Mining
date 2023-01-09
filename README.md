@@ -28,7 +28,7 @@
 
 ## Summary Web-Scrapping
 
-- web scraping with *Selenium* and [Chrome driver](https://chromedriver.chromium.org/downloads)
+- Web scraping with *Selenium* and [Chrome driver](https://chromedriver.chromium.org/downloads)
 
 ```bash
 pip install selenium
