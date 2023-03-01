@@ -1,11 +1,11 @@
-# About
-Proposal for a EU regulation of Artificial Intelligence. It contains three public consultation rounds.
-
 # Code and Data for Web-Scraping EC Initiatives and Text Mining
 
 - The pdf-documents are in the data folder
 - Descriptives and Data exploration: explore.ipynb
 - Analysis: analysis.ipynb
+
+## About
+Proposal for a EU regulation of Artificial Intelligence. It contains three public consultation rounds where stakeholders expressed their views on policy options proposed in the [White Paper on Artificial Intelligence](https://ec.europa.eu/info/law/better-regulation/have-your-say/initiatives/12527-Artificial-intelligence-ethical-and-legal-requirements_en).
 
 ## Summary Data 
 (Status: 07/01/2023)
