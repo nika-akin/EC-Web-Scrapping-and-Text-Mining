@@ -1,3 +1,5 @@
+# About
+Proposal for a EU regulation of Artificial Intelligence. It contains three public consultation rounds.
 
 # Code and Data for Web-Scraping EC Initiatives and Text Mining
 
