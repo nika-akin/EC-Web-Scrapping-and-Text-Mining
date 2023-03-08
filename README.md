@@ -29,23 +29,13 @@ Proposal for a EU regulation of Artificial Intelligence. It contains three publi
 
 
 ## Summary Web-Scrapping
+Dependencies:
 
-- Web scraping with *Selenium* and [Chrome driver](https://chromedriver.chromium.org/downloads)
-
-```bash
-pip install selenium
-```
-- Parsing pdf-documents and html (*BeautifulSoup*)
-```bash
-pip install pdfplumber
-pip install PyPDF2
-```
-```bash
-library pdftools
-```
+- Web scraping with `Selenium` and [Chrome driver](https://chromedriver.chromium.org/downloads)
+- Parsing pdf-documents and html `BeautifulSoup`
+- `pdfplumber` `PyPDF2` `pdftools`
 
 - Translation of multilingual text with googletranslate
-```bash
-pip install deep-translator
-```
+ `deep-translator`
+
 
