@@ -1,4 +1,4 @@
-# Public Opinion on AI Technologies
+# Public Opinion on AI Technologies- Consultations on Inception Impact Assessment
 
 - The pdf-documents are in the data folder
 - Descriptives and Data exploration: explore.ipynb
