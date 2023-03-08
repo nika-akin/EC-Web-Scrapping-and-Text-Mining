@@ -1,4 +1,4 @@
-# Code and Data for Web-Scraping EC Initiatives and Text Mining
+# Public Opinion on AI Technologies
 
 - The pdf-documents are in the data folder
 - Descriptives and Data exploration: explore.ipynb
@@ -40,8 +40,11 @@ pip install selenium
 pip install pdfplumber
 pip install PyPDF2
 ```
+```bash
+library pdftools
+```
 
-- Translation of multilingual text with deepl
+- Translation of multilingual text with googletranslate
 ```bash
 pip install deep-translator
 ```
