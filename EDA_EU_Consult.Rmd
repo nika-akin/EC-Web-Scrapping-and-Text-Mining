@@ -1,0 +1,685 @@
+---
+title: "Exploratory data analysis of three datasets of EU Consultation"
+date: "`r Sys.setlocale('LC_TIME', 'C'); format(Sys.time(), '%d\\\\. %B %Y')`"
+output: 
+  html_document:
+    theme: united
+    highlight: tango
+    df_print: paged
+    code_folding: show
+---
+```{r}
+library(here)
+library(tidyverse)
+here()
+eda <- readRDS("three_submission.rds")  
+```
+Number of submissions per organisation type for three consultation rounds
+
+```{r}
+eda  %>% 
+    filter(size != "Missing") %>% 
+  count(type,consult_round, size, sort = TRUE)  %>% 
+  mutate(size = fct_reorder(size, n)) %>% 
+  ggplot(aes(x = type, y = n, fill = consult_round))+
+  geom_boxplot() +
+  coord_flip()
+```
+
+```{r same plot as above just with half violin, warning=FALSE}
+library(see)
+eda  %>% 
+     filter(size != "Missing") %>% 
+     count(type, time, country, consult_round, sort = TRUE)  %>% 
+     mutate(country= fct_reorder(country, n)) %>% 
+     ggplot(aes(x = time, y = n, fill = consult_round))+ 
+  geom_violindot(fill_dots = "black") + 
+  theme_modern()+ 
+  scale_fill_material_d()+
+  coord_flip()
+
+```
+
+During the three submission rounds which countries and size of organisations submitted most often
+```{r}
+eda %>% 
+  group_by(size, country, consult_round) %>%
+  filter(size != "Missing") %>% 
+mutate(count = n()) %>% 
+   ggplot(aes(x = country, y = count, colour = size , group = country )) +
+  geom_count() +
+  coord_flip()+
+ # geom_line() +
+  facet_wrap(~consult_round) +
+  theme_bw() +
+  labs(y = "submission count", x = "Organizatin size")+
+  theme (legend.position = "right")
+
+ # ggsave("featuregraph2.png",b,  width = 9, height = 6, units = "in")
+```
+
+```{r plot on submission types per country and their sizes}
+eda %>% 
+     group_by(type) %>%
+  filter(country != "Missing", size != "Missing") %>% 
+     mutate(count = n()) %>% 
+    ggplot(aes(x = type, y = count, colour = size , group = size )) +
+  coord_flip()+
+     geom_count() +
+     # geom_line() +
+    facet_wrap(~ country) +
+     theme_bw() +
+    labs(y = "submission count", x = "Type of Organisation")
+#+
+    # theme (legend.position = "none")
+
+  #ggsave("featuregraph.png",c,  width = 9, height = 6, units = "in")
+```
+
+
+```{r}
+eda %>% 
+  count(origin = fct_lump(country, n = 5 ) )
+```
+
+```{r}
+library(tidytext)
+
+eda %>%
+  count(country = fct_lump(country , 9),type) %>%
+  filter(country != "Other", country != "Missing") %>% 
+#  mutate(type= reorder_within(type, n, country)) %>% #item we want to reorder, what to reorder by, the groups we want to reorder within
+  mutate(type = fct_reorder(type,n)) %>% 
+    ggplot(aes(x = n, y = country)) + 
+  geom_col() +
+  scale_y_reordered() + 
+  facet_wrap(vars(type))+
+  labs(y = "Countries",
+         x = "Number of submissions",
+         title = "Which organisations from which countries submitted most often?")
+
+
+```
+
+```{r}
+
+eda %>%
+  count(country = fct_lump(country , 9),type) %>%
+  filter(country != "Other", country != "Missing", type != "Other") %>% 
+#  mutate(type= reorder_within(type, n, country)) %>% #item we want to reorder, what to reorder by, the groups we want to reorder within
+  mutate(type = fct_reorder(type,n)) %>% 
+  ggplot(aes(x = n, y = type)) + 
+  geom_col() +
+  scale_y_reordered() + 
+  facet_wrap(vars(country))+
+  labs(y = "Interest Groups",
+         x = "Number of submissions",
+         title = "Which organisations from which countries submitted most often?")
+```
+
+
+
+```{r}
+eda %>%
+  filter(!is.na(country)) %>%
+  count(initiatives = fct_lump(country, 6)) %>%
+  mutate(initiatives = fct_reorder(initiatives, n)) %>%
+  ggplot(aes(x = n, y = initiatives)) + 
+  geom_col()
+```
+
+
+```{r}
+library(ggridges)
+eda %>% 
+  group_by(country) %>% 
+   mutate(count = n()) %>% 
+  filter(country != "is.na") %>% 
+  ggplot(aes(count,country, fill= consult_round))+
+  geom_density_ridges(alpha= .5)+
+  geom_jitter(width = 0, height =.1, alpha= .25)+
+ # facet_wrap(~consult_round)+
+  labs(x= "Submission counts",
+       y= "",
+       title= "Submissions for the three consultation rounds")
+
+```
+
+
+
+```{r}
+summary(table(eda$type, eda$size)) # chi-square test
+ 
+```
+
+
+
+
+```{r}
+token <- eda %>%
+  select(id, text, time, type, org, size,
+        country, consult_round) %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words, by = "word")
+```
+
+
+
+
+```{r}
+library(textdata)
+
+nrc_joy <- get_sentiments("nrc") %>% 
+  filter(sentiment == "joy")
+
+token %>%
+    inner_join(nrc_joy) %>%
+    count(word, sort = TRUE)
+
+library(tidyr)
+
+#token$id <- readr::parse_number(token$id) 
+
+sentiment <- token %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(type, sentiment, consult_round, country) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
+  mutate(sentiment = positive - negative) %>% 
+  filter(type != "Missing")
+
+# index = id %/% 80,
+
+```
+
+
+
+
+Bing Sentiment-Scores for each Country
+
+```{r}
+library(ggplot2)
+
+ggplot(sentiment, aes(consult_round, sentiment, fill =consult_round)) +
+  geom_boxplot(show.legend = FALSE) +
+  coord_flip() +
+    facet_wrap(vars(country))+
+  labs(x = "Organization Types",
+       y = "Bing Sentiment Scores")
+
+
+
+  #ggsave("featuregraph.png",c,  width = 9, height = 6, units = "in")
+
+```
+
+
+```{r}
+bing_word_counts <- token %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  ungroup()
+```
+
+```{r}
+bing_word_counts %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 10) %>% 
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(x = "Contribution to sentiment",
+       y = NULL)
+
+
+ #ggsave("featuregraph.png",c,  width = 9, height = 6, units = "in")
+```
+
+
+
+
+```{r}
+bingnegative <- get_sentiments("bing") %>% 
+  filter(sentiment == "negative")
+
+wordcounts <- token %>%
+  group_by(type, country, consult_round) %>%
+  summarize(words = n())
+
+token %>%
+  semi_join(bingnegative) %>%
+  group_by(type, country) %>%
+  summarize(negativewords = n()) %>%
+  left_join(wordcounts, by = c("type", "country")) %>%
+  mutate(ratio = negativewords/words) %>%
+  filter(type != 0) %>%
+  slice_max(ratio, n = 1) %>% 
+  ungroup()
+
+```
+
+
+
+```{r}
+ 
+token %>%
+  semi_join(bingnegative) %>%
+  group_by(type, country) %>%
+  summarize(negativewords = n()) %>%
+  left_join(wordcounts, by = c("type", "country")) %>%
+  mutate(ratio = negativewords/words) %>%
+  filter(type != "Missing") %>%
+  slice_max(ratio, n = 1) %>% 
+  ungroup() %>% 
+
+ ggplot(aes(ratio, type)) +
+geom_col(show.legend = TRUE) 
+
+```
+
+```{r}
+ 
+token %>%
+  semi_join(bingnegative) %>%
+  group_by(type, country) %>%
+  summarize(negativewords = n()) %>%
+  left_join(wordcounts, by = c("type", "country")) %>%
+  mutate(ratio = negativewords/words) %>%
+  filter(type != "Missing") %>%
+  slice_max(ratio, n = 1) %>% 
+  ungroup() %>% 
+ ggplot(aes(ratio, country, group = type, color = consult_round)) +
+geom_point(show.legend = TRUE) 
+
+```
+
+```{r}
+ec_bigrams <- eda %>%
+  unnest_tokens(bigram, text, token = "ngrams", n = 2) %>%
+  filter(!is.na(bigram))
+
+ec_bigrams %>% count(bigram, sort=TRUE)
+
+library(tidyr)
+
+bigrams_separated <- ec_bigrams %>%
+  separate(bigram, c("word1", "word2"), sep = " ")
+
+bigrams_filtered <- bigrams_separated %>%
+  filter(!word1 %in% stop_words$word) %>%
+  filter(!word2 %in% stop_words$word)
+
+# new bigram counts:
+bigram_counts <- bigrams_filtered %>% 
+  count(word1, word2, sort = TRUE)
+
+bigram_counts
+
+
+bigrams_united <- bigrams_filtered %>%
+  unite(bigram, word1, word2, sep = " ")
+
+bigrams_united
+
+```
+
+
+```{r}
+bigram_tf_idf <- bigrams_united %>%
+  count(country, bigram) %>%
+  bind_tf_idf(bigram, country, n) %>%
+  arrange(desc(tf_idf))
+
+```
+
+```{r}
+library(forcats)
+library(ggforce)
+#source:https://www.tidytextmining.com/tfidf.html
+
+bigram_tf_idf %>%
+  group_by(country) %>%
+  filter(country == "United Kingdom") %>% # I filtered for 1 country, remove this if all countries wanted
+  filter (bigram != "13 november", bigram != "accessed 13") %>% 
+  slice_max(tf_idf, n = 9) %>%
+  ungroup() %>%
+  ggplot(aes(tf_idf, fct_reorder(bigram, tf_idf), fill = country)) +
+  geom_col(show.legend = FALSE) +
+ # facet_wrap_paginate(~ country, ncol = 2, nrow = 2, scales = "free", page = 7) +
+  labs(x = "tf-idf", y = NULL)
+```
+
+```{r}
+bigram_tf_idf %>%
+  group_by(country) %>%
+  filter(country == "United States") %>% # I filtered for 1 country, remove this if all countries wanted
+filter (bigram != "ieee global", bigram != "systems nlaw", bigram != "4.0 united", bigram != "noncommercial 4.0", bigram !="nfurther resources") %>% 
+  slice_max(tf_idf, n = 9) %>%
+  ungroup() %>%
+  ggplot(aes(tf_idf, fct_reorder(bigram, tf_idf), fill = country)) +
+  geom_col(show.legend = FALSE) +
+ # facet_wrap_paginate(~ country, ncol = 2, nrow = 2, scales = "free", page = 7) +
+  labs(x = "tf-idf", y = NULL)
+
+```
+
+
+```{r}
+bigram_tf_idf %>%
+  group_by(country) %>%
+  filter(country == "Ireland") %>% #I filtered for 1 country, remove this if all countries wanted
+filter (bigram != "ieee global", bigram != "systems nlaw", bigram != "4.0 united", bigram != "noncommercial 4.0", bigram !="nfurther resources") %>% 
+  slice_max(tf_idf, n = 9) %>%
+  ungroup() %>%
+  ggplot(aes(tf_idf, fct_reorder(bigram, tf_idf), fill = country)) +
+  geom_col(show.legend = FALSE) +
+ # facet_wrap_paginate(~ country, ncol = 2, nrow = 2, scales = "free", page = 7) 
+  labs(x = "tf-idf", y = NULL)
+
+ #ggsave("featuregraph.png",c,  width = 9, height = 6, units = "in")
+```
+
+
+
+
+
+
+
+
+
+```{r correlation, warning=FALSE}
+library(widyr)
+ words_by_type <- token %>%
+    count(consult_round, word, sort = TRUE) %>%
+    ungroup()
+
+
+ ec_cors <- words_by_type %>% 
+    pairwise_cor(consult_round, word, n, sort = TRUE)
+ 
+
+ 
+library(ggraph)
+library(igraph)
+set.seed(2017)
+
+ec_cors %>%
+  filter(correlation > .8) %>%
+  graph_from_data_frame() %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(alpha = correlation, width = correlation)) +
+  geom_node_point(size = 3, color = "lightblue") +
+  geom_node_text(aes(label = name), repel = TRUE) +
+  theme_void()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+library(igraph)
+bigram_graph <- bigram_counts %>%
+  filter(n > 20) %>%
+  graph_from_data_frame()
+
+library(ggraph)
+set.seed(2017)
+
+ggraph(bigram_graph, layout = "fr") +
+  geom_edge_link() +
+  geom_node_point() +
+  geom_node_text(aes(label = name), vjust = 1, hjust = 1)
+
+
+set.seed(2020)
+
+a <- grid::arrow(type = "closed", length = unit(.15, "inches"))
+
+ggraph(bigram_graph, layout = "fr") +
+  geom_edge_link(aes(edge_alpha = n), show.legend = TRUE,
+                 arrow = a, end_cap = circle(.07, 'inches'),edge_colour = "tomato") +
+  geom_node_point(color = "lightblue", size = 3) +
+  geom_node_text(aes(label = name), vjust = 1, hjust = 1) +
+  theme_void()
+
+
+```
+
+
+```{r, warning = FALSE, message = F}
+library(textfeatures) #extract features
+library(skimr) #summary statistics
+library(data.table)
+
+eda$ec_features <- textfeatures(eda$text, word_dims = 0,  sentiment = TRUE, normalize = FALSE) #word2vec_dims
+
+eda <- as.data.table (eda) %>% 
+  as_tibble(eda)
+
+
+min_var <- function(x, min = 1) {
+  is_num <- vapply(x, is.numeric, logical(1))
+  non_num <- names(x)[!is_num]
+  yminvar <- names(x[is_num])[vapply(x[is_num], function(.x) stats::var(.x, 
+      na.rm = TRUE) >= min, logical(1))]
+  x[c(non_num, yminvar)]
+}
+
+
+```
+
+
+
+```{r summary}
+eda %>% 
+  select(starts_with("ec_features")) %>% 
+min_var() %>% 
+  skim()
+
+
+```
+
+```{r}
+eda %>% 
+  ggplot(aes(ec_features.sent_vader,country, color = country)) + 
+  geom_boxplot(show.legend = FALSE)+ 
+  facet_wrap(~ consult_round)
+  
+
+```
+
+
+```{r}
+
+a <-eda %>% 
+  filter(type != "Missing") %>% 
+  filter(!ec_features.sent_vader > 3000) %>% 
+    ggplot(aes(type, ec_features.sent_vader, color = type)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "lightgray") + 
+  geom_boxplot(alpha = 0.8, show.legend = FALSE) +
+  theme(text = element_text(size=8))+
+  coord_flip()+
+    ylim(-200, 600)
+```
+
+
+
+
+```{r}
+b <- eda %>% 
+    filter(type != "Missing") %>% 
+  filter(!ec_features.sent_afinn > 3000) %>% 
+ ggplot(aes(type, ec_features.sent_afinn, color= type)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_boxplot(alpha = 0.8, show.legend = FALSE) +
+    theme(text = element_text(size=8))+
+  coord_flip() +
+   ylim(-200, 600)
+```
+
+```{r}
+c <- eda %>% 
+    filter(type != "Missing") %>% 
+  filter(!ec_features.sent_syuzhet > 3000) %>% 
+ ggplot(aes(type, ec_features.sent_syuzhet , color= type)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_boxplot(alpha = 0.8, show.legend = FALSE) +
+    theme(text = element_text(size=8))+
+  coord_flip() +
+   ylim(-200, 600)
+```
+
+```{r}
+d <- eda %>% 
+    filter(type != "Missing") %>% 
+  filter(!ec_features.sent_bing > 3000) %>% 
+ ggplot(aes(type, ec_features.sent_bing , color= type)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_boxplot(alpha = 0.8, show.legend = FALSE) +
+    theme(text = element_text(size=8))+
+  coord_flip() +
+   ylim(-200, 600)
+```
+
+
+
+```{r}
+library(ggpubr)
+theme_set(theme_pubr())
+
+
+  ggarrange(a,b,c,d ,
+            labels = c("vader", "afinn", "syuzhet", "bing"),
+            ncol = 2, nrow = 2)
+
+
+#ggsave("featuregraph.png",figure,  width = 9, height = 6, units = "in")
+```
+
+
+```{r, warning=FALSE}
+z <-eda %>% 
+  filter(country != "Missing") %>% 
+  filter(!ec_features.sent_vader > 3000) %>% 
+    ggplot(aes(country, ec_features.sent_vader, color = country)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "lightgray") + 
+  geom_boxplot(alpha = 0.8, show.legend = FALSE) +
+  geom_jitter(width = 0.15, alpha = .2) +
+    theme(text = element_text(size=8),legend.position="none") +
+  coord_flip()+
+    ylim(-200, 600)
+
+y <- eda %>% 
+    filter(country != "Missing") %>% 
+  filter(!ec_features.sent_afinn > 3000) %>% 
+ ggplot(aes(country, ec_features.sent_afinn, color= country)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_boxplot(alpha = 0.8, show.legend = FALSE) +
+   geom_jitter(width = 0.15, alpha = .2) +
+    theme(text = element_text(size=8),legend.position="none") +
+  coord_flip() +
+   ylim(-200, 600)
+
+x <- eda %>% 
+    filter(type != "Missing") %>% 
+  filter(!ec_features.sent_syuzhet > 3000) %>% 
+ ggplot(aes(country, ec_features.sent_syuzhet , color= country)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_boxplot(alpha = 0.8, show.legend = FALSE) +
+    geom_jitter(width = 0.15, alpha = .2) +
+    theme(text = element_text(size=8),legend.position="none") +
+  coord_flip() +
+   ylim(-200, 600)
+
+
+w <- eda%>% 
+    filter(country != "Missing") %>% 
+  filter(!ec_features.sent_bing > 3000) %>% 
+ ggplot(aes(country, ec_features.sent_bing , color= country)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_boxplot(alpha = 0.8, show.legend = FALSE) +
+  geom_jitter(width=0.15, alpha = .2) +
+    theme(text = element_text(size = 8), legend.position="none")+
+  coord_flip() +
+   ylim(-200, 600)
+
+
+
+  ggarrange(z,y,x,w ,
+           # labels = c("vader", "afinn", "syuzhet", "bing"),
+            ncol = 2, nrow = 2)
+
+
+```
+
+
+```{r warning=FALSE}
+library(ggforce)
+
+ eda %>% 
+  select(starts_with("ec_features"), country) %>% 
+  drop_na() %>% 
+  scale_count() %>%
+  scale_standard() %>%
+  group_by(country) %>%
+  summarise_if(is.numeric, mean) %>%
+  gather(var, val, -country) %>%
+  arrange(-val) %>%
+  mutate(var = factor(var, levels = unique(var))) %>%
+  ggplot(aes(x = var, y = val, fill = country)) + 
+  geom_col(width = .15, fill = "#000000bb") +
+  geom_point(size = 2.5, shape = 21) + 
+  theme_light()+
+  facet_wrap_paginate(~ country, nrow = 2, ncol = 3, page = 1) + 
+  coord_flip() + 
+  theme(legend.position = "none",
+    axis.text = element_text(colour = "black"),
+    axis.text.x = element_text(size = rel(.7)),
+
+   # panel.grid.major = element_line(colour = "#333333", size = rel(.05)),
+   # panel.grid.minor = element_line(colour = "#333333", size = rel(.025))
+   ) + 
+  labs(y = NULL, x = NULL,
+    title = "{textfeatures}: Extract Features from EC-Text",
+    subtitle = "Features extracted from text of EC initiatives 2020-2021")
+
+## save plot
+#ggsave("featuregraph.png", featuregraph, width = 9, height = 6, units = "in")
+```
+
+
+
+
+```{r}
+library(quanteda)
+toks <- tokens(eda$text, remove_punct = TRUE, remove_numbers = TRUE,remove_symbol = TRUE) %>% 
+  tokens_remove(pattern = stopwords("en", source = "marimo"))
+
+
+```
+
+```{r}
+kwic(toks, pattern = "threat*", valuetype = "glob", window = 3)
+```
+
+
+
+
+
+
+
+
+
+
+
+

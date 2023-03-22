@@ -1,0 +1,115 @@
+id;value;new_ value;response_scale
+1;Reference;id;category
+2;Feedback date;time;category
+3;Language;lang;category
+4;User type;type;category
+5;first_last_name;person;category
+6;Scope;scope;category
+7;Organisation name;org;category
+8;Transparency register number;register;category
+9;Organisation size;size;category
+10;Country;country;category
+12;"In your opinion, how important are the six actions proposed in section 4 of the White Paper on AI (1-5: 1 is not important at all, 5 is very important)?
+: Working with Member states";coop_member_states;1 is not important at all, 5 is very important
+13;"In your opinion, how important are the six actions proposed in section 4 of the White Paper on AI (1-5: 1 is not important at all, 5 is very important)?
+: Focussing the efforts of the research and innovation community";research_innov;1 is not important at all, 5 is very important
+14;"In your opinion, how important are the six actions proposed in section 4 of the White Paper on AI (1-5: 1 is not important at all, 5 is very important)?
+: Skills";skills;1 is not important at all, 5 is very important
+15;"In your opinion, how important are the six actions proposed in section 4 of the White Paper on AI (1-5: 1 is not important at all, 5 is very important)?
+: Focus on SMEs";SME;1 is not important at all, 5 is very important
+16;"In your opinion, how important are the six actions proposed in section 4 of the White Paper on AI (1-5: 1 is not important at all, 5 is very important)?
+: Partnership with the private sector";private_sector;1 is not important at all, 5 is very important
+17;"In your opinion, how important are the six actions proposed in section 4 of the White Paper on AI (1-5: 1 is not important at all, 5 is very important)?
+: Promoting the adoption of AI by the public sector";public_sector;1 is not important at all, 5 is very important
+18;"Are there other actions that should be considered?
+";other_action;open format
+19;"In your opinion, how important is it in each of these areas to align policies and strengthen coordination as described in section 4.A of the White Paper (1-5: 1 is not important at all, 5 is very important)?
+: Strengthen excellence in research";excel_research;1 is not important at all, 5 is very important
+20;"In your opinion, how important is it in each of these areas to align policies and strengthen coordination as described in section 4.A of the White Paper (1-5: 1 is not important at all, 5 is very important)?
+: Establish world-reference testing facilities for AI";testing_fac;1 is not important at all, 5 is very important
+21;"In your opinion, how important is it in each of these areas to align policies and strengthen coordination as described in section 4.A of the White Paper (1-5: 1 is not important at all, 5 is very important)?
+: Promote the uptake of AI by business and the public sector";uptake_ai;1 is not important at all, 5 is very important
+22;"In your opinion, how important is it in each of these areas to align policies and strengthen coordination as described in section 4.A of the White Paper (1-5: 1 is not important at all, 5 is very important)?
+: Increase the financing for start-ups innovating in AI";startup_finance;1 is not important at all, 5 is very important
+23;"In your opinion, how important is it in each of these areas to align policies and strengthen coordination as described in section 4.A of the White Paper (1-5: 1 is not important at all, 5 is very important)?
+: Develop skills for AI and adapt existing training programmes";training_skills;1 is not important at all, 5 is very important
+24;"In your opinion, how important is it in each of these areas to align policies and strengthen coordination as described in section 4.A of the White Paper (1-5: 1 is not important at all, 5 is very important)?
+: Build up the European data space";eu_data_space;1 is not important at all, 5 is very important
+25;"Are there other areas that that should be considered?
+";other_area;open format
+26;"In your opinion how important are the three actions proposed in sections 4.B, 4.C and 4.E of the White Paper on AI (1-5: 1 is not important at all, 5 is very important)?
+: Support the establishment of a lighthouse research centre that is world class and able to attract the best minds";lighthouse;1 is not important at all, 5 is very important
+27;"In your opinion how important are the three actions proposed in sections 4.B, 4.C and 4.E of the White Paper on AI (1-5: 1 is not important at all, 5 is very important)?
+: Network of existing AI research excellence centres";net_centres;1 is not important at all, 5 is very important
+28;"In your opinion how important are the three actions proposed in sections 4.B, 4.C and 4.E of the White Paper on AI (1-5: 1 is not important at all, 5 is very important)?
+: Set up a public-private partnership for industrial research";partner_research;1 is not important at all, 5 is very important
+29;"Are there any other actions to strengthen the research and innovation community that should be given a priority?
+";action_research;open format
+30;"In your opinion, how important are each of these tasks of the specialised Digital Innovation Hubs mentioned in section 4.D of the White Paper in relation to SMEs (1-5: 1 is not important at all, 5 is very important)?
+: Help to raise SME’s awareness about potential benefits of AI";benefits_ai;1 is not important at all, 5 is very important
+31;"In your opinion, how important are each of these tasks of the specialised Digital Innovation Hubs mentioned in section 4.D of the White Paper in relation to SMEs (1-5: 1 is not important at all, 5 is very important)?
+: Provide access to testing and reference facilities";access_testing;1 is not important at all, 5 is very important
+32;"In your opinion, how important are each of these tasks of the specialised Digital Innovation Hubs mentioned in section 4.D of the White Paper in relation to SMEs (1-5: 1 is not important at all, 5 is very important)?
+: Promote knowledge transfer and support the development of AI expertise for SMEs";knowhow_transfer;1 is not important at all, 5 is very important
+33;"In your opinion, how important are each of these tasks of the specialised Digital Innovation Hubs mentioned in section 4.D of the White Paper in relation to SMEs (1-5: 1 is not important at all, 5 is very important)?
+: Support partnerships between SMEs, larger enterprises and academia around AI projects";partner_aiproject;1 is not important at all, 5 is very important
+34;"In your opinion, how important are each of these tasks of the specialised Digital Innovation Hubs mentioned in section 4.D of the White Paper in relation to SMEs (1-5: 1 is not important at all, 5 is very important)?
+: Provide information about equity financing for AI startups";equity_finance;1 is not important at all, 5 is very important
+35;"Are there any other tasks that you consider important for specialised Digital Innovations Hubs?
+";tasks_innovhub;open format
+36;"In your opinion, how important are the following concerns about AI (1-5: 1 is not important at all, 5 is very important)?
+: AI may endanger safety";concern_safety;1 is not important at all, 5 is very important
+37;"In your opinion, how important are the following concerns about AI (1-5: 1 is not important at all, 5 is very important)?
+: AI may breach fundamental rights (such as human dignity, privacy, data protection, freedom of expression, workers' rights etc.)";concern_rights;1 is not important at all, 5 is very important
+38;"In your opinion, how important are the following concerns about AI (1-5: 1 is not important at all, 5 is very important)?
+: The use of AI may lead to discriminatory outcomes
+";concern_discrim;1 is not important at all, 5 is very important
+39;"In your opinion, how important are the following concerns about AI (1-5: 1 is not important at all, 5 is very important)?
+: AI may take actions for which the rationale cannot be explained";concern_explain;1 is not important at all, 5 is very important
+40;"In your opinion, how important are the following concerns about AI (1-5: 1 is not important at all, 5 is very important)?
+: AI may make it more difficult for persons having suffered harm to obtain compensation";concern_compensat;1 is not important at all, 5 is very important
+41;"In your opinion, how important are the following concerns about AI (1-5: 1 is not important at all, 5 is very important)?
+: AI is not always accurate";concern_accuracy;1 is not important at all, 5 is very important
+42;"Do you have any other concerns about AI that are not mentioned above? Please specify:
+";concern_other;open format
+43;Do you think that the concerns expressed above can be addressed by applicable EU legislation? If not, do you think that there should be specific new rules for AI systems?;leg_rules;open format
+44;Other, please specify;rules_other;open format
+45;If you think that new rules are necessary for AI system, do you agree that the introduction of new compulsory requirements should be limited to high-risk applications (where the possible harm caused by the AI system is particularly high)?;rules_highrisk;open format
+46;"Other, please specify:
+...47";mitigate_other;open format
+47;Do you agree with the approach to determine “high-risk” AI applications proposed in Section 5.B of the White Paper?;highrisk_approach;open format
+48;"Other, please specify:
+...49";highrisk_other;open format
+49;"If you wish, please indicate the AI application or use that is most concerning (“high-risk”) from your perspective:
+";highrisk_app;open format
+50;In your opinion, how important are the following mandatory requirements of a possible future regulatory framework for AI (as section 5.D of the White Paper) (1-5: 1 is not important at all, 5 is very important)?: The quality of training data sets;requir_qual_training_data;1 is not important at all, 5 is very important
+51;In your opinion, how important are the following mandatory requirements of a possible future regulatory framework for AI (as section 5.D of the White Paper) (1-5: 1 is not important at all, 5 is very important)?: The keeping of records and data;requir_record_data;1 is not important at all, 5 is very important
+52;In your opinion, how important are the following mandatory requirements of a possible future regulatory framework for AI (as section 5.D of the White Paper) (1-5: 1 is not important at all, 5 is very important)?: Information on the purpose and the nature of AI systems;requir_purpose;1 is not important at all, 5 is very important
+53;In your opinion, how important are the following mandatory requirements of a possible future regulatory framework for AI (as section 5.D of the White Paper) (1-5: 1 is not important at all, 5 is very important)?: Robustness and accuracy of AI systems;requir_robust_acc;1 is not important at all, 5 is very important
+54;In your opinion, how important are the following mandatory requirements of a possible future regulatory framework for AI (as section 5.D of the White Paper) (1-5: 1 is not important at all, 5 is very important)?: Human oversight;requir_human_oversight;1 is not important at all, 5 is very important
+55;In your opinion, how important are the following mandatory requirements of a possible future regulatory framework for AI (as section 5.D of the White Paper) (1-5: 1 is not important at all, 5 is very important)?: Clear liability and safety rules;requir_liability;1 is not important at all, 5 is very important
+56;In addition to the existing EU legislation, in particular the data protection framework, including the General Data Protection Regulation and the Law Enforcement Directive, or, where relevant, the new possibly mandatory requirements foreseen above (see question above), do you think that the use of remote biometric identification systems (e.g. face recognition) and other technologies which may be used in public spaces need to be subject to further EU-level guidelines or regulation:;requir_biometric;open format
+57;Please specify your answer:;requir_spec;open format
+58;Do you believe that a voluntary labelling system (Section 5.G of the White Paper) would be useful for AI systems that are not considered high-risk in addition to existing legislation?;label_aisystem;open format
+59;"Do you have any further suggestion on a voluntary labelling system?
+";label_suggest;open format
+60;What is the best way to ensure that AI is trustworthy, secure and in respect of European values and rules?;trust_spec;open format
+61;"Please specify any other enforcement system:
+";trust_enforce;open format
+62;"Do you have any further suggestion on the assessment of compliance?
+";compliance_spec;open format
+63;"The current product safety legislation already supports an extended concept of safety protecting against all kind of risks arising from the product according to its use. However, which particular risks stemming from the use of artificial intelligence do you think should be further spelled out to provide more legal certainty?
+
+";risk_spec;open format
+64;"In your opinion, are there any further risks to be expanded on to provide more legal certainty?
+";risk_reform;open format
+65;Do you think that the safety legislative framework should consider new risk assessment procedures for products subject to important changes during their lifetime?;risk_procedure;open format
+66;"Do you have any further considerations regarding risk assessment procedures?
+";risk_other;open format
+67;Do you think that the current EU legislative framework for liability (Product Liability Directive) should be amended to better cover the risks engendered by certain AI applications?;liability_reform;open format
+68;"Do you have any further considerations regarding the question above?
+";liabilty_further;open format
+69;"Do you think that the current national liability rules should be adapted for the operation of AI to better ensure proper compensation for damage and a fair allocation of liability? 
+";liability_national;open format
+70;Please specify the AI applications:;liabilty_app;open format
+71;Do you have any further considerations regarding the question above?;liabilty_other;open format

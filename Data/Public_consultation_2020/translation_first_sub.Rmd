@@ -1,0 +1,318 @@
+---
+title: "craming data together"
+author: "vb"
+date: "15 2 2023"
+output: html_document
+---
+
+```{r}
+no_eng <-no_eng %>% select(-"...1")
+```
+
+
+```{r}
+test <-submission_firstround %>% filter(lang != "English") %>% filter (!is.na(text))
+```
+
+
+
+```{r}
+
+datawithout_non_eng <- submission_firstround %>% anti_join(test)
+
+```
+
+```{r}
+joint_first_sub <-full_join(no_eng, datawithout_non_eng)
+```
+
+```{r}
+joint_first_sub %>% filter(id == "F529889") %>% select(translated)
+```
+
+
+```{r}
+write_csv(joint_first_sub, "first_sub_trans.csv")
+```
+
+
+
+
+
+
+
+
+```{r}
+joint_first_sub %>% 
+  group_by(size, country) %>%
+  filter(size != "Missing") %>% 
+mutate(count = n()) %>% 
+   ggplot(aes(x = size, y = count, colour = size , group = country )) +
+  geom_count() +
+  coord_flip()+
+ # geom_line() +
+  facet_wrap(~type) +
+  theme_bw() +
+  labs(y = "submission count", x = "Organizatin size")+
+  theme (legend.position = "none")
+
+
+```
+
+
+
+
+
+
+```{r}
+joint_first_sub %>% 
+     group_by(type) %>%
+  filter(country != "Missing", size != "Missing") %>% 
+     mutate(count = n()) %>% 
+    ggplot(aes(x = type, y = count, colour = size , group = size )) +
+  coord_flip()+
+     geom_count() +
+     # geom_line() +
+    facet_wrap(~ country) +
+     theme_bw() +
+    labs(y = "submission count", x = "Type of Organisation")
+```
+
+
+```{r}
+joint_first_sub %>% 
+     group_by(type) %>%
+     mutate(count = n()) %>% 
+     ggplot(aes(x = country, y = count, colour = country , group = country )) +
+  coord_flip()+
+     geom_count() +
+     # geom_line() +
+     facet_wrap(~ type) +
+     theme_bw() +
+     labs(y = "submission count", x = "Type of Organisation")+
+     theme (legend.position = "none")
+```
+
+
+```{r}
+library(tidytext)
+
+scrap21 %>%
+  count(country = fct_lump(country , 9),type) %>%
+  filter(country != "Other", country != "Missing") %>% 
+#  mutate(type= reorder_within(type, n, country)) %>% #item we want to reorder, what to reorder by, the groups we want to reorder within
+  mutate(type = fct_reorder(type,n)) %>% 
+    ggplot(aes(x = n, y = country)) + 
+  geom_col() +
+  scale_y_reordered() + 
+  facet_wrap(vars(type))+
+  labs(y = "Countries",
+         x = "Number of submissions",
+         title = "Which organisations from which countries submitted most often?")
+```
+
+
+
+
+
+```{r}
+
+token <- joint_first_sub %>%
+  select(id, translated, time, type, org, size,
+        country) %>%
+  unnest_tokens(word, translated) %>%
+  anti_join(stop_words, by = "word")
+
+
+```
+
+
+```{r}
+token %>%
+     count(word, sort = TRUE) %>%
+  filter( n > 1000 ) %>%
+     filter(word!= "de", word != "nand", word != "nthe", word!= "article", word != "human", word != "NA") %>% 
+     mutate(word = reorder(word, n)) %>%
+     ggplot(aes(n, word)) +
+     geom_col() +
+     labs(y = NULL)
+```
+
+
+```{r}
+token %>%
+     count(word, sort = TRUE) %>%
+  filter( n > 150 ) %>%
+     filter(word!= "de", word != "nand", word != "nthe", word!= "article", word != "human", word != "NA",word !="ai", word != "data", word != "1", word != "2", word != "3", word != "4", word != "5" ) %>% 
+     mutate(word = reorder(word, n)) %>%
+     ggplot(aes(n, word)) +
+     geom_col() +
+     labs(y = NULL)
+```
+
+```{r}
+library(textdata)
+
+nrc_joy <- get_sentiments("nrc") %>% 
+  filter(sentiment == "joy")
+
+token %>%
+    inner_join(nrc_joy) %>%
+    count(word, sort = TRUE)
+
+library(tidyr)
+
+#token$id <- readr::parse_number(token$id) 
+
+sentiment <- token %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(type, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
+  mutate(sentiment = positive - negative) %>% 
+  filter(type != "Missing")
+```
+
+
+```{r}
+ec_bigrams <- joint_first_sub %>%
+  unnest_tokens(bigram, translated, token = "ngrams", n = 2) %>%
+  filter(!is.na(bigram))
+
+ec_bigrams %>% count(bigram, sort=TRUE)
+
+library(tidyr)
+
+bigrams_separated <- ec_bigrams %>%
+  separate(bigram, c("word1", "word2"), sep = " ")
+
+bigrams_filtered <- bigrams_separated %>%
+  filter(!word1 %in% stop_words$word) %>%
+  filter(!word2 %in% stop_words$word)
+
+# new bigram counts:
+bigram_counts <- bigrams_filtered %>% 
+  count(word1, word2, sort = TRUE)
+
+bigram_counts
+
+
+bigrams_united <- bigrams_filtered %>%
+  unite(bigram, word1, word2, sep = " ")
+
+test <- bigrams_united %>% count(bigram, sort=TRUE) %>% print(n=50)
+reactable::reactable(test)
+
+```
+
+
+```{r}
+bigram_tf_idf %>%
+  group_by(country) %>%
+ #filter(country == "United Kingdom") %>% # I filtered for 1 country, remove this if all countries wanted
+  #filter (bigram != "13 november", bigram != "accessed 13") %>% 
+  slice_max(tf_idf, n = 9) %>%
+  ungroup() %>%
+  ggplot(aes(tf_idf, fct_reorder(bigram, tf_idf), fill = country)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap_paginate(~ country, ncol = 2, nrow = 2, scales = "free", page = 7) +
+  labs(x = "tf-idf", y = NULL)
+
+
+```
+
+
+```{r}
+library(ggforce)
+bigram_tf_idf %>%
+  group_by(country) %>%
+ filter(country == "United Kingdom") %>% # I filtered for 1 country, remove this if all countries wanted
+  #filter (bigram != "13 november", bigram != "accessed 13") %>% 
+  slice_max(tf_idf, n = 9) %>%
+  ungroup() %>%
+  ggplot(aes(tf_idf, bigram, fill = country)) +
+  geom_col(show.legend = FALSE) +
+  #facet_wrap_paginate(~ country, ncol = 2, nrow = 2, scales = "free", page = 7) +
+  labs(x = "tf-idf", y = NULL)
+```
+
+
+
+
+
+```{r}
+```
+
+
+```{r}
+bigram_tf_idf %>%
+  group_by(country) %>%
+  #filter(country == "United States") %>% # I filtered for 1 country, remove this if all countries wanted
+#filter (bigram != "ieee global", bigram != "systems nlaw", bigram != "4.0 united", bigram != "noncommercial 4.0", bigram !="nfurther resources") %>% 
+  slice_max(tf_idf, n = 9) %>%
+  ungroup() %>%
+  ggplot(aes(tf_idf, fct_reorder(bigram, tf_idf), fill = country)) +
+  geom_col(show.legend = FALSE) +
+  #facet_wrap(~country, ncol = 2, scales = "free")+
+ ggforce::facet_wrap_paginate(~country, nrow = 2,ncol = 2, page = 7) +
+  labs(x = "tf-idf", y = NULL)
+```
+
+
+```{r}
+bigram_tf_idf %>%
+  group_by(country) %>%
+  filter(country == "Germany") %>% # I filtered for 1 country, remove this if all countries wanted
+#filter (bigram != "ieee global", bigram != "systems nlaw", bigram != "4.0 united", bigram != "noncommercial 4.0", bigram !="nfurther resources") %>% 
+  slice_max(tf_idf, n = 9) %>%
+  ungroup() %>%
+  ggplot(aes(tf_idf, fct_reorder(bigram, tf_idf), fill = country)) +
+  geom_col(show.legend = FALSE) +
+  #facet_wrap(~country, ncol = 2, scales = "free")+
+ #ggforce::facet_wrap_paginate(~country, nrow = 2,ncol = 2, page = 7) +
+  labs(x = "tf-idf", y = NULL)
+
+
+
+```
+
+```{r}
+bigram_tf_idf %>% arrange(desc(tf_idf))
+```
+
+
+```{r}
+bigram_tf_idf %>%
+  group_by(country) %>%
+  filter(country == "Austria") %>% 
+  #filter( bigram != "lo welcomes", bigram != "lo believes", bigram != "lo shares", bigram != "utmost importance", bigram !="county believes" ) %>% 
+  # I filtered for 1 country, remove this if all countries wanted
+#filter (bigram != "03020308", bigram != "berlin tel", bigram != "para 1", bigram != "straße 29", bigram !="11052 berlin", bigram != "10178 berlin") %>% 
+  slice_max(tf_idf, n = 10) %>%
+  ungroup() %>%
+  ggplot(aes(tf_idf, fct_reorder(bigram, tf_idf), fill = country)) +
+  geom_col(show.legend = FALSE) +
+  #facet_wrap(~country, ncol = 2, scales = "free")+
+ #ggforce::facet_wrap_paginate(~country, nrow = 2,ncol = 2, page = 7) +
+  labs(x = "tf-idf", y = NULL)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,408 @@
+---
+title: "Data Wrangling of three datasets of EU Consultation"
+date: "`r Sys.setlocale('LC_TIME', 'C'); format(Sys.time(), '%d\\\\. %B %Y')`"
+output: 
+  html_document:
+    theme: united
+    highlight: tango
+    df_print: paged
+    code_folding: show
+---
+
+Installing/ loading libraries
+```{r utils, echo=TRUE, warning=FALSE, message=FALSE}
+if(!require("quanteda")) {install.packages("quanteda"); library("quanteda")}
+if(!require("lubridate")) {install.packages("readtext"); library("readtext")}
+if(!require("tidyverse")) {install.packages("tidyverse"); library("tidyverse")}
+if(!require("pdftools")) {install.packages("pdftools"); library("pdftools")}
+
+theme_set(theme_light())
+```
+
+## Data Wrangling of Data set: 1/3 *submission_firstround* 
+
+### Task A. Extract text from pdfs in the zip-folder of Consultation Round 1/3 
+```{r extract pdf names w. pdftools, warning=F, echo=FALSE}
+#setwd("https://github.com/nika-akin/EC-Web-Scrapping-and-Text-Mining/tree/main/Data/Public_consultation_2020/files")
+library(here)
+
+#(I) extracting full path name of the files in the folder (= file.list) (/Public_consultation_2020/files)
+#(II)looping over the names (lapply) to extract text
+#Note: "PDF error: Invalid Font Weight" error can be ignored
+#Note: check raw data (i.e., pdf names for valid type and escape & trailing characters)
+
+#(I)
+directory <- "C:/Users/batzdova/Desktop/EC-Web-Scrapping-and-Text-Mining/Data/Public_consultation_2020/files/"
+file.list <- paste(directory, list.files(directory, pattern = "*.pdf"), sep = "")
+length(file.list) #verify file number (N = 435)
+```
+
+```{r extract pdf text, warning=F, echo=F}
+#(II)
+#unused<<<<<<<<<<<<<<<<<<<<<
+#result <-lapply(file.list, FUN = function(files) {
+#  pdf_text(files)
+#})
+#result <- lapply(file.list, pdftools::pdf_text)
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+#make a table with 2 columns: the doc name & pdf-content
+# combine text from each pdf into one string with paste0
+
+filestextDF <- data.frame(Document = file.list,
+                         text = sapply(file.list, function(x) 
+                                 paste0(pdf_text(x), collapse = ' ')))
+
+tb_pdf <- as_tibble(filestextDF)
+
+```
+
+
+```{r extract ids from lengthy pdf-names}
+#extract ids (of length of 7 characters) for the docs to match with metadata later
+#N= 435 docs
+#Problem: multiple docs for same id (= multiple docs by same submitter)
+
+tb_pdf$Document <- str_remove(tb_pdf$Document, "C:/Users/batzdova/Desktop/EC-Web-Scrapping-and-Text-Mining/Data/Public_consultation_2020/files/")
+ids <-substr(tb_pdf$Document, 1,7)
+
+tb_pdf$id <- ids
+```
+
+
+```{r import raw survey data for first consult round}
+library(readr)
+Public_consultation_2020 <- read_delim("./Data/Public_consultation_2020/files/Public_consultation_2020.csv", 
+                                       
+    delim = ";", escape_double = FALSE, trim_ws = TRUE)
+
+consult_meta <- as_tibble(Public_consultation_2020)
+```
+
+
+```{r join data frames (text and metadata), with different column names}
+temp <- left_join(consult_meta, tb_pdf, by = c("Reference" = "id")) %>% as_tibble()
+
+```
+
+
+```{r recode lengthy variables}
+#drop variables
+#var column nr. 73: temp[,73]
+temp <- temp %>% 
+  select(! `You can upload a document here:\n\n` ) %>% 
+  select(! `Publication privacy settings` )
+
+#renaming variables
+
+temp <- temp %>% 
+  rename(filename = Document,
+         country = Country,
+         org = `Organisation name`,
+         id = Reference,
+         time =  `Feedback date`,
+         lang = Language,
+         type = `User type`,
+         firstname = `First name`,
+         surname = Surname,
+         scope = Scope,
+         register = `Transparency register number`,
+         size = `Organisation size`) %>% 
+  rename_with (~ 'coop_member_states', matches('Working with Member states')) %>% 
+  rename_with (~ 'research_innov', matches('Focussing the efforts of the research and innovation community')) %>% 
+  rename_with (~ 'skills', matches('\n: Skills')) %>% 
+  rename_with (~ 'SME', matches('\n: Focus on SMEs')) %>% 
+  rename_with (~ 'private_sector', matches('\n: Partnership with the private sector')) %>%   
+  rename_with (~ 'public_sector', matches('\n: Promoting the adoption of AI by the public sector')) %>% 
+  rename_with (~ 'other_action', matches('other actions that should be considered?')) %>% 
+  rename_with (~ 'excel_research', matches('\n: Strengthen excellence in research')) %>% 
+  rename_with (~ 'testing_fac', matches('Establish world-reference testing facilities for AI')) %>%  
+  rename_with (~ 'uptake_ai', matches('Promote the uptake of AI by business and the public sector')) %>%        
+  rename_with (~ 'startup_finance', matches('Increase the financing for start-ups innovating in AI')) %>% 
+  rename_with (~ 'training_skills', matches('Develop skills for AI and adapt existing training programmes')) %>% 
+  rename_with (~ 'eu_data_space', matches('Build up the European data space'))  %>% 
+  rename_with (~ 'other_area', matches('Are there other areas that that should be considered')) %>%
+  rename_with (~ 'lighthouse', matches('Support the establishment of a lighthouse research centre that is world class and able to attract the best minds')) %>% 
+  rename_with (~ 'net_centres', matches('Network of existing AI research excellence centres')) %>% 
+  rename_with (~ 'partner_research', matches('Set up a public-private partnership for industrial research'))  %>%   rename_with (~ 'action_research', matches('actions to strengthen the research and innovation community that should be given a priority')) %>% 
+  rename_with (~ 'benefits_ai', matches('Help to raise SME’s awareness about potential benefits of AI')) %>%   
+  rename_with (~ 'access_testing', matches('Provide access to testing and reference facilities')) %>%   
+  rename_with (~ 'knowhow_transfer', matches('Promote knowledge transfer and support the development of AI expertise for SMEs')) %>%  
+  rename_with (~ 'partner_aiproject', matches('Support partnerships between SMEs, larger enterprises and academia around AI projects')) %>%  
+  rename_with (~ 'equity_finance', matches('Provide information about equity financing for AI startups')) %>%  
+  rename_with (~ 'tasks_innovhub', matches('important for specialised Digital Innovations Hubs')) %>%
+  rename_with (~ 'concern_safety', matches('AI may endanger safety')) %>% 
+  rename_with (~ 'concern_rights', matches('AI may breach fundamental rights'))  %>% 
+  rename_with (~ 'concern_safety', matches('AI may endanger safety')) %>% 
+  rename_with (~ 'concern_discrim', matches('The use of AI may lead to discriminatory outcomes')) %>% 
+  rename_with (~ 'concern_explain', matches('AI may take actions for which the rationale cannot be explained')) %>% 
+  rename_with (~ 'concern_compensat', matches('AI may make it more difficult for persons having suffered harm to obtain compensation'))  %>% 
+  rename_with (~ 'concern_accuracy', matches('AI is not always accurate')) %>%   
+  rename_with (~ 'concern_other', matches('Do you have any other concerns about AI that are not mentioned')) %>%
+  rename_with (~ 'leg_rules', matches('Do you think that the concerns expressed above can be addressed by applicable EU legislation')) 
+   
+```
+
+
+```{r}
+names(temp)[44]<- "rules_other"
+names(temp)[45]<- "rules_highrisk"
+names(temp)[46]<- "mitigate_other"
+names(temp)[47]<- "highrisk_approach"
+names(temp)[48]<- "highrisk_other"
+names(temp)[49]<- "highrisk_app"
+names(temp)[50]<- "requir_qual_training_data"
+names(temp)[51]<- "requir_record_data"
+names(temp)[52]<- "requir_purpose"
+names(temp)[53]<- "requir_robust_acc"
+names(temp)[54]<- "requir_human_oversight"
+names(temp)[55]<- "requir_liability"
+names(temp)[56]<- "requir_biometric"
+
+names(temp)[57]<- "requir_spec"
+names(temp)[58]<- "label_aisystem"
+names(temp)[59]<- "label_suggest"
+names(temp)[60]<- "trust_spec"
+names(temp)[61]<- "trust_enforce"
+names(temp)[62]<- "compliance_spec"
+names(temp)[63]<- "risk_spec"
+names(temp)[64]<- "risk_reform"
+names(temp)[65]<- "reform_assess"
+names(temp)[65]<- "risk_procedure"
+names(temp)[66]<- "risk_other"
+names(temp)[67]<- "liability_reform"
+names(temp)[68]<- "liabilty_further"
+names(temp)[69]<- "liability_national"
+names(temp)[70]<- "liabilty_app"
+names(temp)[71]<- "liabilty_other"
+```
+
+#### Merged data frame of first consulation round
+```{r merge separate surname fullname into one var wiht tidyr}
+tidy_df1 <-temp %>% unite("person", firstname:surname, sep = " ")
+
+#add column indicative for first consultation round
+tidy_df1 <- tidy_df1 %>% 
+  mutate(consult_round = "one")
+```
+
+```{r}
+tidy_df1 <- tidy_df1 %>%  mutate(type = recode(type, #old value = new value
+                    `NGO (Non-governmental organisation)` = "Non-governmental organisation (NGO)",
+                    `Academic/Research Institution` = "Academic/research Institution",
+                    `EU Citizen` = "EU citizen" ,
+                    `Company/Business organisation` = "Company/business organisation",
+                    `Consumer Organisation` = "Consumer organisation",
+                    `Trade Union` = "Trade union",
+                    `Business Association` = "Business association"
+                    ))
+```
+
+```{r}
+tidy_df1 <- tidy_df1 %>%  mutate(size = recode(size, #old value = new value
+                    `Medium (< 250 employees)` = "Medium (50 to 249 employees)",
+                    `Small (< 50 employees)` = "Small (10 to 49 employees)",
+                    `Micro (< 10 employees)` = "Micro (1 to 9 employees)"))
+```
+
+
+
+
+
+### Second round of Consultations `roadmap_2020` and final round `comission_adoption_2021`
+
+```{r, loading data, warning=FALSE}
+library(readr)
+commission_adoption_2021 <- read_csv("./Augmented_data/commission_adoption_2021.csv")
+
+roadmap_2020 <- read_csv("./Augmented_data/roadmap_2020.csv")
+```
+
+
+
+```{r renaming variables, parsing time and recoding the german items, warning=FALSE}
+#alternative library(janitor) roadmap %>% clean_names()
+
+
+scrap20 <- roadmap_2020 %>% 
+  rename(country = `Country of origin`,
+         id =  `Feedback reference`,
+         time = `Submitted on`  ,
+         person = `Submitted by` ,
+         type = `User type` ,
+         org = Organisation,
+         size = `Organisation size` ,
+         register = `Transparency register number`,
+         initiative = Initiative,
+         abstract = Paragraph,
+         text = pdf)  %>%
+  mutate(time = dmy(time)) %>% 
+ mutate(type = recode(type, #old value = new value
+                    `NRO (Nichtregierungsorganisation)` = "Non-governmental organisation (NGO)",
+                    `Universität/Forschungseinrichtung` = "Academic/research Institution",
+                    `EU-Bürger/-in` = "EU citizen" ,
+                    `Sonstiges` = "Other",
+                    `Unternehmen/Unternehmensverband` = "Company/business organisation",
+                    `Verbraucherverband` = "Consumer organisation",
+                    `Behörde` = "Public authority",
+                    `Gewerkschaft` = "Trade union",
+                    `Wirtschaftsverband` = "Business association",
+                    `-` = "Missing"
+                    )) %>% 
+   mutate(size = recode(size, #old value = new value
+                    `mittel (50 bis 249 Beschäftigte)` = "Medium (50 to 249 employees)",
+                    `klein (10 bis 49 Beschäftigte)` = "Small (10 to 49 employees)",
+                    `groß (250 oder mehr Beschäftigte)` = "Large (250 or more)",
+                    `-` = "Missing",
+                    `sehr klein (1 bis 9 Beschäftigte)` = "Micro (1 to 9 employees)")) %>% #I need to find this workaround, the above procedure did not function
+mutate(size = case_when(str_detect(size, "mittel") ~ "Medium (50 to 249 employees)", TRUE ~ size)) %>% 
+mutate(size = case_when(str_detect(size, "klein") ~ "Small (10 to 49 employees)", TRUE ~ size)) %>%   
+mutate(size = case_when(str_detect(size, "sehr") ~ "Micro (1 to 9 employees)", TRUE ~ size)) %>%     
+mutate(country = recode(country,
+                          `Vereinigten Staaten` = "United States",
+                          `Belgien` = "Belgium",
+                          `Slowakei` = "Slovakia",
+                          `Italien` = "Italy",
+                          `Niederlande` = "Netherlands",
+                          `Dänemark` = "Denmark",
+                          `Vereinigtes Königreich` = "United Kingdom",
+                          `Frankreich` = "France",
+                          `-` = "Missing",
+                          `international` = "Other",
+                          `Spanien` = "Spain",
+                          `Österreich` = "Austria",
+                          `Schweden` = "Sweden",
+                          `Polen` = "Poland",
+                          `Irland` = "Ireland",
+                          `Finnland` = "Finland",
+                          `Deutschland` = "Germany",
+                          `Ungarn` = "Hungary",
+                          `Tschechien` = "Czech Republic",
+                          `Rumänien` = "Romania",
+                          `Bulgarien` = "Bulgaria"))
+  
+
+
+scrap21 <-commission_adoption_2021 %>% 
+  rename(country = `Country of origin`,
+         id =  `Feedback reference`,
+         time = `Submitted on`  ,
+         person = `Submitted by` ,
+         type = `User type` ,
+         org = Organisation,
+         size = `Organisation size` ,
+         register = `Transparency register number`,
+         initiative = Initiative,
+         abstract = Paragraph,
+         text = pdf) %>%
+  mutate(time = dmy(time)) %>% 
+  mutate(type = recode(type, 
+                       `Ukyo Mori` = "Other",
+                       `Johannes Kröhnert` = "Other",
+                         `-` = "Missing")) %>% 
+   mutate(country = recode(country,
+                           `Regional` = "Other",
+                           `Local` = "Other",
+                           `feedback.usertype.company` = "Other",
+                           `feedback.usertype.business_association` = "Other",
+                           `National` = "Other")) %>% 
+  mutate(size = recode(size,
+                       `-` = "Missing"))
+  
+
+scrap20 <- scrap20 %>% mutate(consult_round = "two")
+scrap21 <- scrap21 %>% mutate(consult_round = "three")
+```
+
+```{r}
+#problem with scrap 20 and the ids: F550611 and F550610 they are doubles (with empty abstract and text section) complete entry is: F550619
+# scrap 20 hast 123 rows but should have 133 !
+#after filtering : 121 rows
+
+scrap20 <- scrap20 %>% 
+  filter (id != "F550611", id != "F550610")
+
+```
+
+```{r}
+#problem2: missing on all variables
+scrap20 %>% filter(is.na(abstract))
+scrap20 %>% filter(id == "-")
+
+scrap20 <- scrap20 %>%  filter(id !="-")
+```
+
+
+```{r}
+#there are n = 85 pdfs in the folder but only n = 69 [text] in the csv
+#there are n = 49 entries with only an abstract but no text: filter(!is.na(abstract), is.na(text))
+
+scrap20 %>% filter(!is.na(text))
+```
+
+#### A merged data frame of two submission rounds
+
+```{r merge the two data sets (123+304) together with a total of 427 rows, 12 var}
+submission <- rbind(scrap20,scrap21)
+```
+
+
+### Merged data frame of all three submission rounds
+with different cell and column numbers 
+
+they share: id, time, person, type, org, size, register, country, text
+```{r parse date time }
+tidy_df1$time<- as.Date(tidy_df1$time, "%d.%m.%Y")
+
+```
+
+
+```{r relocate var}
+tidy_df1 <- tidy_df1 %>% relocate(person, .after = time )
+```
+
+```{r}
+tidy_df1 <- tidy_df1 %>% relocate(type, .after = person )
+```
+
+```{r}
+tidy_df1 <- tidy_df1 %>% relocate(org, .after = type )
+```
+
+```{r}
+tidy_df1 <- tidy_df1 %>% relocate(size, .after = org )
+```
+
+```{r}
+tidy_df1 <- tidy_df1 %>% relocate(register, .after = size )
+```
+
+```{r}
+tidy_df1 <- tidy_df1 %>% relocate(country, .after = register )
+```
+
+```{r}
+tidy_df1 <- tidy_df1 %>% relocate(text, .after = country )
+```
+
+```{r}
+submission <- submission %>% relocate(text, .after = country )
+```
+
+###Merge all 3 data frames together
+
+```{r ,1659 observations, 75 var}
+three_submission <- full_join( tidy_df1, submission, by = c("id", "time", "type", "size", "org", "register", "text", "consult_round", "person", "country"))
+```
+
+
+```{r}
+saveRDS(three_submission, "three_submission.rds")
+```
+
+
+
+
+
+
+
+
