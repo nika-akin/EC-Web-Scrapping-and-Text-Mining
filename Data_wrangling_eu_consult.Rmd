@@ -15,9 +15,14 @@ if(!require("quanteda")) {install.packages("quanteda"); library("quanteda")}
 if(!require("lubridate")) {install.packages("readtext"); library("readtext")}
 if(!require("tidyverse")) {install.packages("tidyverse"); library("tidyverse")}
 if(!require("pdftools")) {install.packages("pdftools"); library("pdftools")}
+if(!require("haven")) {install.packages("haven"); library("haven")}
+if(!require("parameters")) {install.packages("parameters"); library("parameters")}
+if(!require("performance")) {install.packages("performance"); library("performance")}
+if(!require("see")) {install.packages("see"); library("see")}
 
 theme_set(theme_light())
 ```
+
 
 ## Data Wrangling of Data set: 1/3 *submission_firstround* 
 
@@ -37,7 +42,7 @@ file.list <- paste(directory, list.files(directory, pattern = "*.pdf"), sep = ""
 length(file.list) #verify file number (N = 435)
 ```
 
-```{r extract pdf text, warning=F, echo=F}
+```{r extract pdf text, warning=F, message=F}
 #(II)
 #unused<<<<<<<<<<<<<<<<<<<<<
 #result <-lapply(file.list, FUN = function(files) {
@@ -69,7 +74,7 @@ tb_pdf$id <- ids
 ```
 
 
-```{r import raw survey data for first consult round}
+```{r import raw survey data for first consult round, warning=F, message=F }
 library(readr)
 Public_consultation_2020 <- read_delim("./Data/Public_consultation_2020/files/Public_consultation_2020.csv", 
                                        
@@ -81,16 +86,17 @@ consult_meta <- as_tibble(Public_consultation_2020)
 
 ```{r join data frames (text and metadata), with different column names}
 temp <- left_join(consult_meta, tb_pdf, by = c("Reference" = "id")) %>% as_tibble()
+temp %>%  filter(is.na(text)) #observations without pdf text
 
 ```
-
+Recoding the survey (First submission round)
 
 ```{r recode lengthy variables}
 #drop variables
 #var column nr. 73: temp[,73]
 temp <- temp %>% 
-  select(! `You can upload a document here:\n\n` ) %>% 
-  select(! `Publication privacy settings` )
+  dplyr::select(! `You can upload a document here:\n\n` ) %>% 
+  dplyr::select(! `Publication privacy settings` )
 
 #renaming variables
 
@@ -176,6 +182,440 @@ names(temp)[70]<- "liabilty_app"
 names(temp)[71]<- "liabilty_other"
 ```
 
+
+```{r recode variables}
+#cooperation member states (Likert scale 1-5 (not important - very important))
+temp <- temp %>% 
+  mutate(coop_member_states = case_when(
+    coop_member_states == "5 - Very important" ~ 5,
+    coop_member_states == "4 - Important" ~ 4,
+    coop_member_states == "3 - Neutral" ~ 3,
+    coop_member_states == "2 - Not important" ~ 2,
+    coop_member_states == "1 - Not important at all" ~ 1,
+    coop_member_states == "No opinion" ~ 0)
+    )
+
+```
+
+```{r}
+c(summary(temp$coop_member_states)[c("Min.", "Max.", "Mean")], "sd" = sd(temp$coop_member_states, na.rm = FALSE)) %>% round(digits = 2)
+
+hist(temp$coop_member_states, breaks = 60)
+```
+
+```{r}
+# recoding research innovation focus (research_innov)
+temp <- temp %>% 
+  mutate(research_innov = case_when(
+    research_innov == "5 - Very important" ~ 5,
+    research_innov == "4 - Important" ~ 4,
+    research_innov == "3 - Neutral" ~ 3,
+    research_innov == "2 - Not important" ~ 2,
+    research_innov == "1 - Not important at all" ~ 1,
+    research_innov == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#recoding skill (skills)
+temp <- temp %>% 
+  mutate(skills = case_when(
+    skills == "5 - Very important" ~ 5,
+    skills == "4 - Important" ~ 4,
+    skills == "3 - Neutral" ~ 3,
+    skills == "2 - Not important" ~ 2,
+    skills == "1 - Not important at all" ~ 1,
+    skills == "No opinion" ~ 0)
+    )
+
+```
+
+```{r}
+#recoding SME (SME)
+temp <- temp %>% 
+  mutate(SME = case_when(
+    SME == "5 - Very important" ~ 5,
+    SME == "4 - Important" ~ 4,
+    SME == "3 - Neutral" ~ 3,
+    SME == "2 - Not important" ~ 2,
+    SME == "1 - Not important at all" ~ 1,
+    SME == "No opinion" ~ 0)
+    )
+```
+
+
+```{r}
+#partnership w. private sector (private_sector)
+temp <- temp %>% 
+  mutate(private_sector = case_when(
+    private_sector == "5 - Very important" ~ 5,
+    private_sector == "4 - Important" ~ 4,
+    private_sector == "3 - Neutral" ~ 3,
+    private_sector == "2 - Not important" ~ 2,
+    private_sector == "1 - Not important at all" ~ 1,
+    private_sector == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#partnership w. public_sector (public_sector)
+temp <- temp %>% 
+  mutate(public_sector = case_when(
+    public_sector == "5 - Very important" ~ 5,
+    public_sector == "4 - Important" ~ 4,
+    public_sector == "3 - Neutral" ~ 3,
+    public_sector == "2 - Not important" ~ 2,
+    public_sector == "1 - Not important at all" ~ 1,
+    public_sector == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#Strengthen excellence in research (excel_research)
+temp <- temp %>% 
+  mutate(excel_research = case_when(
+    excel_research == "5 - Very important" ~ 5,
+    excel_research == "4 - Important" ~ 4,
+    excel_research == "3 - Neutral" ~ 3,
+    excel_research == "2 - Not important" ~ 2,
+    excel_research == "1 - Not important at all" ~ 1,
+    excel_research == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#Establish world-reference testing facilities for AI (testing_fac)
+temp <- temp %>% 
+  mutate(testing_fac = case_when(
+    testing_fac == "5 - Very important" ~ 5,
+    testing_fac == "4 - Important" ~ 4,
+    testing_fac == "3 - Neutral" ~ 3,
+    testing_fac == "2 - Not important" ~ 2,
+    testing_fac == "1 - Not important at all" ~ 1,
+    testing_fac == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#Promote the uptake of AI by business and the public sector (uptake_ai)
+temp <- temp %>% 
+  mutate(uptake_ai = case_when(
+    uptake_ai == "5 - Very important" ~ 5,
+    uptake_ai == "4 - Important" ~ 4,
+    uptake_ai == "3 - Neutral" ~ 3,
+    uptake_ai == "2 - Not important" ~ 2,
+    uptake_ai == "1 - Not important at all" ~ 1,
+    uptake_ai == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#Increase the financing for start-ups innovating in AI (startup_finance)
+temp <- temp %>% 
+  mutate(startup_finance = case_when(
+    startup_finance == "5 - Very important" ~ 5,
+    startup_finance == "4 - Important" ~ 4,
+    startup_finance == "3 - Neutral" ~ 3,
+    startup_finance == "2 - Not important" ~ 2,
+    startup_finance == "1 - Not important at all" ~ 1,
+    startup_finance == "No opinion" ~ 0)
+    )
+```
+
+
+```{r}
+#Develop skills for AI and adapt existing training programmes (training_skills)
+temp <- temp %>% 
+  mutate(training_skills = case_when(
+    training_skills == "5 - Very important" ~ 5,
+    training_skills == "4 - Important" ~ 4,
+    training_skills == "3 - Neutral" ~ 3,
+    training_skills == "2 - Not important" ~ 2,
+    training_skills == "1 - Not important at all" ~ 1,
+    training_skills == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#Build up the European data space (eu_data_space)
+temp <- temp %>% 
+  mutate(eu_data_space = case_when(
+    eu_data_space == "5 - Very important" ~ 5,
+    eu_data_space == "4 - Important" ~ 4,
+    eu_data_space == "3 - Neutral" ~ 3,
+    eu_data_space == "2 - Not important" ~ 2,
+    eu_data_space == "1 - Not important at all" ~ 1,
+    eu_data_space == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#establishment of a lighthouse research centre (lighthouse)
+temp <- temp %>% 
+  mutate(lighthouse = case_when(
+    lighthouse == "5 - Very important" ~ 5,
+    lighthouse == "4 - Important" ~ 4,
+    lighthouse == "3 - Neutral" ~ 3,
+    lighthouse == "2 - Not important" ~ 2,
+    lighthouse == "1 - Not important at all" ~ 1,
+    lighthouse == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#Network of existing AI research excellence centres (net_centres)
+temp <- temp %>% 
+  mutate(net_centres = case_when(
+    net_centres == "5 - Very important" ~ 5,
+    net_centres == "4 - Important" ~ 4,
+    net_centres == "3 - Neutral" ~ 3,
+    net_centres == "2 - Not important" ~ 2,
+    net_centres == "1 - Not important at all" ~ 1,
+    net_centres == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#Set up a public-private partnership for industrial research (partner_research)
+temp <- temp %>% 
+  mutate(partner_research = case_when(
+    partner_research == "5 - Very important" ~ 5,
+    partner_research == "4 - Important" ~ 4,
+    partner_research == "3 - Neutral" ~ 3,
+    partner_research == "2 - Not important" ~ 2,
+    partner_research == "1 - Not important at all" ~ 1,
+    partner_research == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#SMEs awareness about potential benefits of AI (benefits_ai)
+temp <- temp %>% 
+  mutate(benefits_ai = case_when(
+    benefits_ai == "5 - Very important" ~ 5,
+    benefits_ai == "4 - Important" ~ 4,
+    benefits_ai == "3 - Neutral" ~ 3,
+    benefits_ai == "2 - Not important" ~ 2,
+    benefits_ai == "1 - Not important at all" ~ 1,
+    benefits_ai == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#Provide access to testing and reference facilities(access_testing)
+temp <- temp %>% 
+  mutate(access_testing = case_when(
+    access_testing == "5 - Very important" ~ 5,
+    access_testing == "4 - Important" ~ 4,
+    access_testing == "3 - Neutral" ~ 3,
+    access_testing == "2 - Not important" ~ 2,
+    access_testing == "1 - Not important at all" ~ 1,
+    access_testing == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#Promote knowledge transfer and support the development of AI expertise for SMEs(knowhow_transfer)
+temp <- temp %>% 
+  mutate(knowhow_transfer = case_when(
+    knowhow_transfer == "5 - Very important" ~ 5,
+    knowhow_transfer == "4 - Important" ~ 4,
+    knowhow_transfer== "3 - Neutral" ~ 3,
+    knowhow_transfer == "2 - Not important" ~ 2,
+    knowhow_transfer == "1 - Not important at all" ~ 1,
+    knowhow_transfer == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#partnerships between SMEs, larger enterprises and academia around AI projects(partner_aiproject)
+temp <- temp %>% 
+  mutate(partner_aiproject = case_when(
+    partner_aiproject == "5 - Very important" ~ 5,
+    partner_aiproject == "4 - Important" ~ 4,
+    partner_aiproject == "3 - Neutral" ~ 3,
+    partner_aiproject == "2 - Not important" ~ 2,
+    partner_aiproject == "1 - Not important at all" ~ 1,
+    partner_aiproject == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#information about equity financing for AI startups(equity_finance)
+temp <- temp %>% 
+  mutate(equity_finance = case_when(
+    equity_finance == "5 - Very important" ~ 5,
+    equity_finance == "4 - Important" ~ 4,
+    equity_finance == "3 - Neutral" ~ 3,
+    equity_finance == "2 - Not important" ~ 2,
+    equity_finance == "1 - Not important at all" ~ 1,
+    equity_finance == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#AI may endanger safety (concern_safety)
+temp <- temp %>% 
+  mutate(concern_safety = case_when(
+    concern_safety == "5 - Very important" ~ 5,
+    concern_safety == "4 - Important" ~ 4,
+    concern_safety == "3 - Neutral" ~ 3,
+    concern_safety == "2 - Not important" ~ 2,
+    concern_safety == "1 - Not important at all" ~ 1,
+    concern_safety == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#AI may breach fundamental rights (such as human dignity, privacy, data protection (concern_rights)
+temp <- temp %>% 
+  mutate(concern_rights = case_when(
+    concern_rights == "5 - Very important" ~ 5,
+    concern_rights == "4 - Important" ~ 4,
+    concern_rights == "3 - Neutral" ~ 3,
+    concern_rights == "2 - Not important" ~ 2,
+    concern_rights == "1 - Not important at all" ~ 1,
+    concern_rights == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#AI may lead to discriminatory outcomes (concern_discrim)
+temp <- temp %>% 
+  mutate(concern_discrim = case_when(
+    concern_discrim == "5 - Very important" ~ 5,
+    concern_discrim == "4 - Important" ~ 4,
+    concern_discrim == "3 - Neutral" ~ 3,
+    concern_discrim == "2 - Not important" ~ 2,
+    concern_discrim == "1 - Not important at all" ~ 1,
+    concern_discrim == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#actions for which the rationale cannot be explained (concern_explain)
+temp <- temp %>% 
+  mutate(concern_explain = case_when(
+    concern_explain == "5 - Very important" ~ 5,
+    concern_explain == "4 - Important" ~ 4,
+    concern_explain == "3 - Neutral" ~ 3,
+    concern_explain == "2 - Not important" ~ 2,
+    concern_explain == "1 - Not important at all" ~ 1,
+    concern_explain == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#difficult to obtain compensation(concern_compensat)
+temp <- temp %>% 
+  mutate(concern_compensat = case_when(
+    concern_compensat == "5 - Very important" ~ 5,
+    concern_compensat == "4 - Important" ~ 4,
+    concern_compensat == "3 - Neutral" ~ 3,
+    concern_compensat == "2 - Not important" ~ 2,
+    concern_compensat == "1 - Not important at all" ~ 1,
+    concern_compensat == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#AI is not always accurate (concern_accuracy)
+temp <- temp %>% 
+  mutate(concern_accuracy = case_when(
+    concern_accuracy == "5 - Very important" ~ 5,
+    concern_accuracy == "4 - Important" ~ 4,
+    concern_accuracy == "3 - Neutral" ~ 3,
+    concern_accuracy == "2 - Not important" ~ 2,
+    concern_accuracy == "1 - Not important at all" ~ 1,
+    concern_accuracy == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#quality of training data sets (requir_qual_training_data)
+temp <- temp %>% 
+  mutate(requir_qual_training_data = case_when(
+    requir_qual_training_data == "5 - Very important" ~ 5,
+    requir_qual_training_data == "4 - Important" ~ 4,
+    requir_qual_training_data == "3 - Neutral" ~ 3,
+    requir_qual_training_data == "2 - Not important" ~ 2,
+    requir_qual_training_data == "1 - Not important at all" ~ 1,
+    requir_qual_training_data == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#keeping of records and data(requir_record_data)
+temp <- temp %>% 
+  mutate(requir_record_data = case_when(
+    requir_record_data == "5 - Very important" ~ 5,
+    requir_record_data == "4 - Important" ~ 4,
+    requir_record_data == "3 - Neutral" ~ 3,
+    requir_record_data == "2 - Not important" ~ 2,
+    requir_record_data == "1 - Not important at all" ~ 1,
+    requir_record_data == "No opinion" ~ 0)
+    )
+```
+
+
+```{r}
+# Info on the purpose and the nature of AI systems (requir_purpose)
+temp <- temp %>% 
+  mutate(requir_purpose = case_when(
+    requir_purpose == "5 - Very important" ~ 5,
+    requir_purpose == "4 - Important" ~ 4,
+    requir_purpose == "3 - Neutral" ~ 3,
+    requir_purpose == "2 - Not important" ~ 2,
+    requir_purpose == "1 - Not important at all" ~ 1,
+    requir_purpose == "No opinion" ~ 0)
+    )
+```
+
+
+```{r}
+# Robustness and accuracy of AI systems (requir_robust_acc)
+temp <- temp %>% 
+  mutate(requir_robust_acc = case_when(
+    requir_robust_acc == "5 - Very important" ~ 5,
+    requir_robust_acc == "4 - Important" ~ 4,
+    requir_robust_acc == "3 - Neutral" ~ 3,
+    requir_robust_acc == "2 - Not important" ~ 2,
+    requir_robust_acc == "1 - Not important at all" ~ 1,
+    requir_robust_acc == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#Clear liability and safety rules (requir_liability)
+temp <- temp %>% 
+  mutate(requir_liability = case_when(
+    requir_liability == "5 - Very important" ~ 5,
+    requir_liability == "4 - Important" ~ 4,
+    requir_liability == "3 - Neutral" ~ 3,
+    requir_liability == "2 - Not important" ~ 2,
+    requir_liability == "1 - Not important at all" ~ 1,
+    requir_liability == "No opinion" ~ 0)
+    )
+```
+
+```{r}
+#Human oversight (requir_human_oversight)
+temp <- temp %>% 
+  mutate(requir_human_oversight = case_when(
+    requir_human_oversight == "5 - Very important" ~ 5,
+    requir_human_oversight == "4 - Important" ~ 4,
+    requir_human_oversight == "3 - Neutral" ~ 3,
+    requir_human_oversight == "2 - Not important" ~ 2,
+    requir_human_oversight == "1 - Not important at all" ~ 1,
+    requir_human_oversight == "No opinion" ~ 0)
+    )
+```
+
+
+
+
+
+
 #### Merged data frame of first consulation round
 ```{r merge separate surname fullname into one var wiht tidyr}
 tidy_df1 <-temp %>% unite("person", firstname:surname, sep = " ")
@@ -186,7 +626,8 @@ tidy_df1 <- tidy_df1 %>%
 ```
 
 ```{r}
-tidy_df1 <- tidy_df1 %>%  mutate(type = recode(type, #old value = new value
+tidy_df1 <- tidy_df1 %>%  
+  mutate(type = recode(type, #old value = new value
                     `NGO (Non-governmental organisation)` = "Non-governmental organisation (NGO)",
                     `Academic/Research Institution` = "Academic/research Institution",
                     `EU Citizen` = "EU citizen" ,
@@ -198,7 +639,8 @@ tidy_df1 <- tidy_df1 %>%  mutate(type = recode(type, #old value = new value
 ```
 
 ```{r}
-tidy_df1 <- tidy_df1 %>%  mutate(size = recode(size, #old value = new value
+tidy_df1 <- tidy_df1 %>%  
+  mutate(size = recode(size, #old value = new value
                     `Medium (< 250 employees)` = "Medium (50 to 249 employees)",
                     `Small (< 50 employees)` = "Small (10 to 49 employees)",
                     `Micro (< 10 employees)` = "Micro (1 to 9 employees)"))
@@ -394,9 +836,45 @@ submission <- submission %>% relocate(text, .after = country )
 three_submission <- full_join( tidy_df1, submission, by = c("id", "time", "type", "size", "org", "register", "text", "consult_round", "person", "country"))
 ```
 
+```{r}
+#size
+three_submission <- three_submission %>% 
+  mutate(size = case_when(
+    size == "Large (250 or more)" ~ 4,
+    size == "Medium (50 to 249 employees)" ~ 3,
+    size == "Small (10 to 49 employees)" ~ 2,
+    size == "Micro (1 to 9 employees)" ~ 1,
+    size == "Missing" ~ 0)
+    )
+```
+
+
+
 
 ```{r}
 saveRDS(three_submission, "three_submission.rds")
+```
+
+
+
+
+Deal with missing variables
+```{r}
+sum(is.na(three_submission$text))
+
+library(naniar)
+gg_miss_var(eda)
+```
+
+
+```{r}
+library(janitor)
+
+eda %>% 
+  tabyl(country) %>% 
+  adorn_totals("row") %>%
+  adorn_pct_formatting() %>% 
+  knitr::kable()
 ```
 
 

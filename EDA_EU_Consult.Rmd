@@ -8,19 +8,219 @@ output:
     df_print: paged
     code_folding: show
 ---
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(here)
 library(tidyverse)
+library(knitr)
+library(lattice)
+library(tidyverse)
+library(likert)
+library(MASS)
+library(psych)
+library(viridis)
+library(ggplot2)
+library(here)
+library(flextable)
+library(devtools)
+library(dplyr)
 here()
 eda <- readRDS("three_submission.rds")  
 ```
+
+```{r}
+library(pander)
+
+eda %>% 
+  summary() %>% 
+  pander()
+```
+
+```{r}
+library(patchwork)
+
+d1 <- eda %>% 
+  ggplot(aes(x = skills)) +
+  geom_density(fill="#69b3a2",
+               color="#e9ecef") +
+  scale_y_continuous(expand=expansion(mult=c(0,0.1)))
+
+
+d2 <- eda %>% 
+  ggplot(aes(x = public_sector)) +
+  geom_density(fill="#69b3a2",
+               color="#e9ecef") +
+  scale_y_continuous(expand=expansion(mult=c(0,0.1)))
+
+
+d3 <- eda %>% 
+  ggplot(aes(x = concern_discrim)) +
+  geom_density(fill="#69b3a2",
+               color="#e9ecef") +
+  scale_y_continuous(expand=expansion(mult=c(0,0.1)))
+
+
+d4 <- eda %>% 
+  ggplot(aes(x = private_sector)) +
+  geom_density(fill="#69b3a2",
+               color="#e9ecef") +
+  scale_y_continuous(expand=expansion(mult=c(0,0.1)))
+
+
+
+
+d1 + d2 +d3 +d4
+```
+
+
+
+```{r}
+eda %>% 
+  filter(country != "NA") %>% 
+  ggplot(aes(x = public_sector, group = country, fill = country)) +
+  geom_density(alpha = .3) +
+  scale_y_continuous(expand=expansion(mult=c(0,0.1)))
+```
+
+
+
+
+```{r}
+eda %>% 
+ggplot(aes(x = concern_discrim, y = eu_data_space)) +
+  geom_point(aes(size = size, color = type), alpha = .5) +
+  scale_x_log10(breaks = c(500, 1000, 2000, 4000,
+                           8000, 16000, 32000, 64000)) +
+  scale_y_continuous(breaks = seq(0, 90, by = 10))
+```
+
+
+```{r}
+library(correlation)
+library(GGally)
+
+eda %>% 
+  correlation %>% 
+  knitr::kable()
+eda %>% 
+ dplyr::select((-c(id,abstract, initiative, filename, consult_round, person, org, register, lang, scope, text, lang, size, rules_other))) %>% 
+  ggcorr(label = TRUE,
+         label_round = 2)
+```
+
+```{r, warning= FALSE}
+library(broom)
+
+model <- lm(coop_member_states ~ knowhow_transfer + excel_research, data = eda)
+
+tidy_model <- model %>% 
+  tidy()
+tidy_model %>% 
+  knitr::kable()
+
+glance(model)
+
+
+library(sjPlot)
+plot_model(model,
+           type = "std")
+plot_model(model,
+           type = "pred")
+```
+
+
+```{r line_03, echo=T, message=FALSE, warning=FALSE}
+
+# create cumulative density plot
+clrs3 <- c("firebrick4",  "gray70", "darkblue")
+clrs5 <- c("firebrick4", "firebrick1", "gray70", "blue", "darkblue")
+
+eda %>%
+  dplyr::filter(country =="United States" | country == "Germany"| country == "Belgium") %>% 
+  ggplot(aes(x = coop_member_states, color = country)) + 
+  geom_step(aes(y = ..y..), stat = "ecdf") +
+  labs(y = "Cumulative Density") + 
+  scale_x_discrete(limits = c("1","2","3","4","5"), 
+                   breaks = c(1,2,3,4,5),
+                   labels=c("not important at all", "not important", 
+                            "neutral", "important", "very important")) + 
+  scale_colour_manual(values = clrs3) + 
+  theme_bw() 
+```
+
+```{r}
+eda %>% 
+  dplyr:: group_by( time) %>% 
+  summarise(Frequency = n()) %>% 
+  ggplot(aes(time, Frequency)) + 
+  geom_line()
+```
+
+
+
+```{r}
+
+test <- 
+
+
+eda %>%
+  dplyr::filter(country =="United States" | country == "Germany"| country == "Belgium") %>% 
+  ggplot(aes(coop_member_states, Frequency, 
+             fill = coop_member_states, 
+             color = coop_member_states)) +
+  facet_grid(~country) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_line() +
+  # define colors
+  #scale_fill_manual(values=clrs5) +
+#  scale_color_manual(values=clrs5) +
+  # add text and define color
+  geom_text(aes(label=Frequency), vjust=1.6, color="white", 
+            # define text position and size
+            position = position_dodge(0.9),  size=3.5) +     
+  theme_bw() +
+  theme(axis.text.x=element_blank())
+```
+
+
+```{r}
+
+lbs <- c("not important at all", "not important", "neutral", "important", "very important")
+
+survey <- eda %>% 
+  dplyr:: select(research_innov,  skills, coop_member_states, SME, uptake_ai, concern_discrim, concern_safety, concern_compensat, concern_explain, concern_rights, concern_accuracy, private_sector, public_sector, eu_data_space, startup_finance, knowhow_transfer) %>% 
+  dplyr::mutate_if(is.character, factor) %>%
+  mutate_if(is.numeric, factor, levels = 1:5,  labels = lbs) %>%
+  drop_na() %>%
+  as.data.frame()
+
+
+likert(survey)
+
+```
+
+
+
+```{r}
+plot(likert(survey), ordered = T, wrap= 60) + 
+  ggtitle("How important are developments and risks for the legislation")
+```
+
+
+```{r}
+
+```
+
+
+
+
+
 Number of submissions per organisation type for three consultation rounds
 
 ```{r}
 eda  %>% 
     filter(size != "Missing") %>% 
-  count(type,consult_round, size, sort = TRUE)  %>% 
-  mutate(size = fct_reorder(size, n)) %>% 
+  count(type,consult_round,  sort = TRUE)  %>% 
+  mutate(size = fct_reorder(type, n)) %>% 
   ggplot(aes(x = type, y = n, fill = consult_round))+
   geom_boxplot() +
   coord_flip()
@@ -128,6 +328,19 @@ eda %>%
   geom_col()
 ```
 
+```{r}
+eda %>%
+  count(country = fct_lump(country , 9),type) %>%
+#  mutate (type = count(type)) %>% 
+ # filter(country != "Other", country != "Missing") %>% 
+#  mutate(type = fct_reorder(type,n)) %>% 
+    ggplot(aes(x = n, y = country)) + 
+  geom_point() +
+  geom_smooth(method= "lm")
+ 
+
+```
+
 
 ```{r}
 library(ggridges)
@@ -151,13 +364,22 @@ eda %>%
 summary(table(eda$type, eda$size)) # chi-square test
  
 ```
+```{r}
+#eda %>% 
+ # group_by()
+ # mutate(count = n()) %>% 
+ # mutate(country = fct_lump(country, 6)) %>% 
+ # ggplot(aes(count, consult_round, color= country))+ 
+ # geom_point()+ 
+ # geom_smooth(method= "lm")
+```
 
 
 
 
 ```{r}
 token <- eda %>%
-  select(id, text, time, type, org, size,
+  dplyr::select(id, text, time, type, org, size,
         country, consult_round) %>%
   unnest_tokens(word, text) %>%
   anti_join(stop_words, by = "word")
@@ -482,7 +704,7 @@ min_var <- function(x, min = 1) {
 
 ```{r summary}
 eda %>% 
-  select(starts_with("ec_features")) %>% 
+  dplyr::select(starts_with("ec_features")) %>% 
 min_var() %>% 
   skim()
 
@@ -673,11 +895,92 @@ kwic(toks, pattern = "threat*", valuetype = "glob", window = 3)
 ```
 
 
+Non-english cases
+
+```{r}
+library(stringi, warn.conflicts = FALSE)
+
+is_english <- function(str){
+  
+  stri_detect_language(str) == "en"
+}
+
+sum(!sapply(eda$text, is_english)) #result is a logical vector
+```
 
 
 
 
 
+
+
+```{r}
+reg_linear <- lm(
+  coop_member_states ~ research_innov * concern_safety+ 
+  benefits_ai+ public_sector+ private_sector+ SME+ lighthouse+net_centres+ testing_fac + requir_record_data+ startup_finance + size + concern_discrim + concern_compensat+ concern_explain + requir_liability+ requir_human_oversight+ concern_accuracy,
+  data = three_submission)
+
+
+parameters::model_parameters(reg_linear) %>% 
+     plot()
+
+performance::check_normality(reg_linear) %>%
+     plot()
+
+parameters::model_parameters(reg_linear)
+#Interaction
+library(sjPlot)
+
+plot_model(
+  reg_linear,
+  type = "int"
+)
+```
+```{r}
+library(datawizard)
+
+three_submission %>% 
+  select(coop_member_states,
+         skills,
+         SME,
+         research_innov) %>%
+  describe_distribution(iqr = FALSE)
+
+```
+
+```{r}
+three_submission %>% 
+  select(coop_member_states,
+         skills,
+         SME,
+         research_innov,
+         size,
+         country) %>% 
+  drop_na() %>% 
+  group_by(country) %>% 
+  summarize(research_mean = mean(research_innov),
+            coop_mean = mean(coop_member_states)) 
+```
+
+```{r}
+
+library(sjPlot)
+reg_linear %>% 
+  plot_model(
+    type = "pred", 
+    terms = "research_innov"
+  )
+```
+
+
+```{r}
+three_submission %>% 
+  group_by(consult_round, country) %>% 
+  count(sort = TRUE) 
+
+
+
+```
 
 
 
