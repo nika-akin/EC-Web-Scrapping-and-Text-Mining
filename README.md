@@ -29,17 +29,12 @@ Install my-project with npm
 
 If you have any feedback, please reach out to us at veronika.batzdorfer@gesis.org
 
-# Public Opinion on AI Technologies- Consultations on Inception Impact Assessment
 
-- The pdf-documents are in the data folder
-- Descriptives and Data exploration: explore.ipynb
-- Analysis: analysis.ipynb
 
 ## About
 Proposal for a EU regulation of Artificial Intelligence. It contains three public consultation rounds where stakeholders expressed their views on policy options proposed in the [White Paper on Artificial Intelligence](https://ec.europa.eu/info/law/better-regulation/have-your-say/initiatives/12527-Artificial-intelligence-ethical-and-legal-requirements_en).
 
 ## Summary Data 
-(Status: 07/01/2023)
 
 
 #### + Commission Adoption, Feedback Period: [Artificial intelligence – ethical and legal requirements](https://ec.europa.eu/info/law/better-regulation/have-your-say/initiatives/12527-Artificial-intelligence-ethical-and-legal-requirements/feedback_en?p_id=24212003) 
