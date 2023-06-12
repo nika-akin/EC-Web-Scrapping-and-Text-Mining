@@ -31,8 +31,10 @@ It contains data on three public consultation rounds where (business, academic, 
 Install my-project with npm
 
 ```bash
-  npm install my-project
-  cd my-project
+pip install selenium
+pip install pdfplumber
+pip install deep-translator
+pip install bertopic
 ```
     
 ## Acknowledgements
