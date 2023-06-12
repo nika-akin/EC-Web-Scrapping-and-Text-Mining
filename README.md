@@ -6,7 +6,7 @@ It contains data on three public consultation rounds where (business, academic, 
 
 ## Documentation
 
- [Codebook Survey: Consultation No.1]([https://linktodocumentation](https://github.com/nika-akin/EC-Web-Scrapping-and-Text-Mining/blob/main/Augmented_data/codebook_survey_consult_roundone.csv))
+ [Codebook Survey: Consultation No.1]([https://linktodocumentation](https://github.com/nika-akin/EC-Web-Scrapping-and-Text-Mining/blob/main/Augmented_data/codebook_survey_consult_roundone.csv)
 
 ### Summary Data 
 
