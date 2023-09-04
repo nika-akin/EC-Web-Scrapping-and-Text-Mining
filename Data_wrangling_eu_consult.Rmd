@@ -42,7 +42,7 @@ file.list <- paste(directory, list.files(directory, pattern = "*.pdf"), sep = ""
 length(file.list) #verify file number (N = 435)
 ```
 
-```{r extract pdf text, warning=F, message=F}
+```{r extract pdf text, warning=F, message=F, echo=FALSE}
 #(II)
 #unused<<<<<<<<<<<<<<<<<<<<<
 #result <-lapply(file.list, FUN = function(files) {
@@ -74,6 +74,19 @@ tb_pdf$id <- ids
 ```
 
 
+Some submitted multiple documents, thus docs will be dublicates have to identifiy and turn into unique id values
+```{r}
+length(unique(tb_pdf$id))
+
+tb_pdf[duplicated(tb_pdf$id),]
+```
+```{r}
+tb_pdf$id <- make.unique(tb_pdf$id, sep = ".")
+```
+
+
+Read in the survey (as csv from website) of the 1st consult round (== consult_meta)
+
 ```{r import raw survey data for first consult round, warning=F, message=F }
 library(readr)
 Public_consultation_2020 <- read_delim("./Data/Public_consultation_2020/files/Public_consultation_2020.csv", 
@@ -82,26 +95,51 @@ Public_consultation_2020 <- read_delim("./Data/Public_consultation_2020/files/Pu
 
 consult_meta <- as_tibble(Public_consultation_2020)
 ```
+Join first consult crawling and survey responses (==temp)
+not sure if full_join [n=**1,232** with missing text 797] or left_join[n=**1,216** with 797 ]
+
+```{r}
+consult_meta %>%
+     filter(!is.na(Country)) %>%
+    count(initiatives = Country, sort=TRUE) %>% 
+  print(n=40)
+```
+
+
+
 
 
 ```{r join data frames (text and metadata), with different column names}
-temp <- left_join(consult_meta, tb_pdf, by = c("Reference" = "id")) %>% as_tibble()
-temp %>%  filter(is.na(text)) #observations without pdf text
+#temp <- left_join(consult_meta, tb_pdf, by = c("Reference" = "id")) %>% 
+#  as_tibble()
+
+
+temp <- full_join(consult_meta, tb_pdf, by = c("Reference" = "id")) %>% 
+     as_tibble()
+
+temp %>%  
+  filter(is.na(text)) #observations without pdf text
 
 ```
 Recoding the survey (First submission round)
 
-```{r recode lengthy variables}
+```{r}
 #drop variables
 #var column nr. 73: temp[,73]
 temp <- temp %>% 
-  dplyr::select(! `You can upload a document here:\n\n` ) %>% 
+  dplyr::select(! `You can upload a document here:\n\n`) %>% 
   dplyr::select(! `Publication privacy settings` )
+```
+
+
+
+
+```{r recode lengthy variables}
 
 #renaming variables
 
 temp <- temp %>% 
-  rename(filename = Document,
+  dplyr::rename(filename = Document,
          country = Country,
          org = `Organisation name`,
          id = Reference,
@@ -201,6 +239,7 @@ temp <- temp %>%
 c(summary(temp$coop_member_states)[c("Min.", "Max.", "Mean")], "sd" = sd(temp$coop_member_states, na.rm = FALSE)) %>% round(digits = 2)
 
 hist(temp$coop_member_states, breaks = 60)
+
 ```
 
 ```{r}
@@ -322,6 +361,13 @@ temp <- temp %>%
     )
 ```
 
+
+```{r}
+c(summary(temp$startup_finance)[c("Min.", "Max.", "Mean")], "sd" = sd(temp$startup_finance, na.rm = FALSE)) %>% round(digits = 2)
+
+hist(temp$startup_finance, breaks = 60)
+
+```
 
 ```{r}
 #Develop skills for AI and adapt existing training programmes (training_skills)
@@ -611,7 +657,12 @@ temp <- temp %>%
     )
 ```
 
+```{r}
+c(summary(temp$requir_human_oversight)[c("Min.", "Max.", "Mean")], "sd" = sd(temp$requir_human_oversight, na.rm = FALSE)) %>% round(digits = 2)
 
+hist(temp$requir_human_oversight, breaks = 60)
+
+```
 
 
 
@@ -666,7 +717,7 @@ roadmap_2020 <- read_csv("./Augmented_data/roadmap_2020.csv")
 
 
 scrap20 <- roadmap_2020 %>% 
-  rename(country = `Country of origin`,
+  dplyr::rename(country = `Country of origin`,
          id =  `Feedback reference`,
          time = `Submitted on`  ,
          person = `Submitted by` ,
@@ -725,7 +776,7 @@ mutate(country = recode(country,
 
 
 scrap21 <-commission_adoption_2021 %>% 
-  rename(country = `Country of origin`,
+  dplyr::rename(country = `Country of origin`,
          id =  `Feedback reference`,
          time = `Submitted on`  ,
          person = `Submitted by` ,
@@ -783,7 +834,7 @@ scrap20 %>% filter(!is.na(text))
 
 #### A merged data frame of two submission rounds
 
-```{r merge the two data sets (123+304) together with a total of 427 rows, 12 var}
+```{r merge the two data sets (123+304) together with a total of 422 rows, 12 var}
 submission <- rbind(scrap20,scrap21)
 ```
 
@@ -833,7 +884,8 @@ submission <- submission %>% relocate(text, .after = country )
 ###Merge all 3 data frames together
 
 ```{r ,1659 observations, 75 var}
-three_submission <- full_join( tidy_df1, submission, by = c("id", "time", "type", "size", "org", "register", "text", "consult_round", "person", "country"))
+three_submission <- full_join(tidy_df1, submission, 
+                              by = c("id", "time", "type", "size", "org", "register", "text", "consult_round", "person", "country"))
 ```
 
 ```{r}
@@ -848,11 +900,69 @@ three_submission <- three_submission %>%
     )
 ```
 
+### Most importantly, some basic text cleaning routines of the pdf texts (=='text').
+
+```{r}
+library(tidytext) # tokenize text, remove stop words
+library(tidyverse) # wrangle data, count words
+library(textclean) # removing non-ascii chars
+
+consult_text_clean <- three_submission %>%
+  mutate(text = str_replace(text, "Ref. Ares", ""),
+    text = str_trim(text), #trim leading and trailing white space
+         text = replace_url(text), #remove URLs from text
+         text = replace_non_ascii(text), #remove non-ascii characters
+         text = replace_symbol(text), #replace $ and other characters with word replacements
+         text = str_remove_all(text, "[0-9]+"), #remove numbers
+         text = str_remove_all(text, "[[:punct:]]+"),
+         text = str_squish(text),
+         text = replace_non_ascii(text)) #remove extra white space from text (e.g., line breaks)) #remove punctuation
+
+```
+
+```{r}
+consult_text_clean %>% 
+  filter(!is.na(abstract))
+```
+```{r}
+consult_text_clean %>% 
+  filter(!is.na(text))
+```
+
+###For the missing values in text I want to replace them with the values of abstract if they are not missing too.
+### 
+
+```{r}
+consult_text_clean$text <- ifelse(is.na(consult_text_clean$text),
+                                  consult_text_clean$abstract,
+                                  consult_text_clean$text)
+```
+
+Drop missing text observations for the topic modeling 
+Resulting in *N* = 857 text observations
+
+```{r}
+consult_text_clean <- consult_text_clean %>% 
+  filter(!is.na(text))
+```
 
 
 
 ```{r}
-saveRDS(three_submission, "three_submission.rds")
+saveRDS(consult_text_clean, "consult_text_clean.rds")
+write_csv(consult_text_clean, "consult_text_clean.csv")
+```
+
+```{r}
+#custom_stop_words <- tibble(word = c("canada", "canadas", "report", "cent", "gouvqcca", "crimi", "nal")) #words that may appear frequently on certain pages, but that we don't want to keep. 
+
+consult_tokens <- consult_text_clean %>%
+  unnest_tokens(word, text, token = "words", to_lower = TRUE) %>%
+  anti_join(stop_words) %>% #remove English stop words (e.g., I, a, the)
+ # anti_join(custom_stop_words) %>% #remove our custom stop words
+ # filter(n > 50) %>% #keep only pages with more than 100 words
+  count(id, word) #count the number of times each word appears on each page. We'll need this to calculate tf-idf in the next step.
+
 ```
 
 
@@ -860,22 +970,32 @@ saveRDS(three_submission, "three_submission.rds")
 
 Deal with missing variables
 ```{r}
-sum(is.na(three_submission$text))
-
 library(naniar)
-gg_miss_var(eda)
+sum(is.na(consult_text_clean$text))
+
+gg_miss_var(consult_text_clean)
 ```
 
 
 ```{r}
 library(janitor)
 
-eda %>% 
+consult_text_clean %>% 
   tabyl(country) %>% 
   adorn_totals("row") %>%
   adorn_pct_formatting() %>% 
   knitr::kable()
 ```
+
+
+
+
+
+
+
+
+
+
 
 
 

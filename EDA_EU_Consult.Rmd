@@ -8,7 +8,7 @@ output:
     df_print: paged
     code_folding: show
 ---
-```{r, message=FALSE, warning=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 library(here)
 library(tidyverse)
 library(knitr)
@@ -23,9 +23,53 @@ library(here)
 library(flextable)
 library(devtools)
 library(dplyr)
+library(correlation)
 here()
-eda <- readRDS("three_submission.rds")  
+#eda <- readRDS("three_submission.rds")  
+use 'renv'
+consult_text_clean <- readRDS("C:/Users/batzdova/Desktop/EC-Web-Scrapping-and-Text-Mining/consult_text_clean.rds")
+
+eda <- consult_text_clean
 ```
+```{r}
+#load libraries
+library(tidyverse) #masks stats::filter, lag
+library(tibble)
+library(psych) #masks ggpplot2:: %+%, alpha
+library(GGally) #masks dbplyr::nasa
+library(kableExtra) #masks dplyr::group_rows
+library(MVN)
+```
+```{r}
+
+```
+
+
+
+```{r}
+
+(pairsPlot = GGally::ggpairs(data = sub,
+                    upper = "blank",
+                    diag = list(continuous = wrap("densityDiag")),
+                    lower = list(continuous = wrap(ggally_smooth_lm)),
+                    title = "Pairs Plot of Human-Machine Items"))
+
+```
+
+
+```{r}
+```
+
+
+
+
+
+
+
+
+
+
+
 
 ```{r}
 library(pander)
@@ -35,25 +79,25 @@ eda %>%
   pander()
 ```
 
-```{r}
+```{r warning=FALSE}
 library(patchwork)
 
 d1 <- eda %>% 
-  ggplot(aes(x = skills)) +
+  ggplot(aes(x = coop_member_states)) +
   geom_density(fill="#69b3a2",
                color="#e9ecef") +
   scale_y_continuous(expand=expansion(mult=c(0,0.1)))
 
 
 d2 <- eda %>% 
-  ggplot(aes(x = public_sector)) +
+  ggplot(aes(x = eu_data_space)) +
   geom_density(fill="#69b3a2",
                color="#e9ecef") +
   scale_y_continuous(expand=expansion(mult=c(0,0.1)))
 
 
 d3 <- eda %>% 
-  ggplot(aes(x = concern_discrim)) +
+  ggplot(aes(x = benefits_ai)) +
   geom_density(fill="#69b3a2",
                color="#e9ecef") +
   scale_y_continuous(expand=expansion(mult=c(0,0.1)))
@@ -65,10 +109,58 @@ d4 <- eda %>%
                color="#e9ecef") +
   scale_y_continuous(expand=expansion(mult=c(0,0.1)))
 
+d5 <- eda %>% 
+  ggplot(aes(x= requir_liability))+
+  geom_density(fill="#69b3a2",
+               color="#e9ecef") +
+  scale_y_continuous(expand=expansion(mult=c(0,0.1)))
+ 
+d6 <- eda %>% 
+  ggplot(aes(x= requir_human_oversight))+
+  geom_density(fill="#69b3a2",
+               color="#e9ecef") +
+  scale_y_continuous(expand=expansion(mult=c(0,0.1)))
+ 
+
+
+d1 + d2 +d3 +d4 +d5 +d6
+```
 
 
 
-d1 + d2 +d3 +d4
+
+
+
+
+
+
+```{r warning=FALSE}
+
+eda %>% 
+  filter(country != "NA") %>% 
+   dplyr::filter(country =="United States" | country == "Germany"| country == "Italy") %>% 
+  ggplot(aes(x = concern_rights, group = country, fill = country)) +
+  geom_density(alpha = .3) +
+  scale_y_continuous(expand=expansion(mult=c(0,0.1)))
+```
+
+
+```{r densityplot_uptake_ai}
+eda %>% 
+  filter(country != "NA") %>% 
+   dplyr::filter(country =="United States" | country == "Germany"| country == "Italy") %>% 
+  ggplot(aes(x =uptake_ai , group = country, fill = country)) +
+  geom_density(alpha = .3) +
+  scale_y_continuous(expand=expansion(mult=c(0,0.1)))
+```
+
+```{r percent densityplot_uptake_ai}
+eda %>% 
+  filter(country != "NA") %>% 
+   dplyr::filter(country =="United States" | country == "Germany"| country == "Italy") %>% 
+  ggplot(aes(x =uptake_ai ,y = (..count../sum(..count..)),group = country, fill = country)) +
+ geom_density(alpha = .3)
+
 ```
 
 
@@ -76,21 +168,136 @@ d1 + d2 +d3 +d4
 ```{r}
 eda %>% 
   filter(country != "NA") %>% 
-  ggplot(aes(x = public_sector, group = country, fill = country)) +
-  geom_density(alpha = .3) +
-  scale_y_continuous(expand=expansion(mult=c(0,0.1)))
+   dplyr::filter(country =="United States" | country == "Germany"| country == "Italy") %>% 
+  ggplot(aes(x =uptake_ai ,group = country)) +
+ geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.4) +
+ labs(y = "Percent", fill="Importance") +
+    facet_grid(~country) +
+    scale_y_continuous(labels = scales::percent)
 ```
+
+
+```{r}
+eda %>% 
+  filter(country != "NA") %>% 
+   dplyr::filter(country =="United States" | country == "Germany"| country == "Italy") %>% 
+  ggplot(aes(x =private_sector, group = country)) +
+ geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.4) +
+ labs(y = "Percent", fill="Importance") +
+    facet_grid(~country) +
+    scale_y_continuous(labels = scales::percent)
+```
+
 
 
 
 
 ```{r}
 eda %>% 
-ggplot(aes(x = concern_discrim, y = eu_data_space)) +
-  geom_point(aes(size = size, color = type), alpha = .5) +
-  scale_x_log10(breaks = c(500, 1000, 2000, 4000,
-                           8000, 16000, 32000, 64000)) +
-  scale_y_continuous(breaks = seq(0, 90, by = 10))
+  filter(country != "NA") %>% 
+   dplyr::filter(country =="United States" | country == "Germany"| country == "Italy") %>% 
+  ggplot(aes(x =benefits_ai , group = country, fill = country)) +
+  geom_density(alpha = .3) +
+  scale_y_continuous(expand=expansion(mult=c(0,0.1)))
+```
+
+```{r}
+eda %>% 
+  filter(type=="Company/business organisation" | type=="EU citizen"| type == "Academic/research Institution"|type=="Non-governmental organisation (NGO)") %>% 
+ggplot(aes(x = concern_explain , y =  requir_purpose )) +
+  geom_jitter(aes(color = type), alpha = .3) 
+```
+
+
+
+```{r}
+eda %>% 
+  filter(type=="Academic/research Institution" | type=="EU citizen") %>% 
+ggplot(aes(x = uptake_ai, y =  benefits_ai)) +
+  geom_jitter(aes(color = type), alpha = .3) 
+```
+
+
+
+
+```{r pairwise correlation}
+cor_test(eda, "concern_explain", "requir_purpose", method = "spearman")
+
+plot(cor_test(eda, "concern_explain", "requir_purpose"))
+```
+
+```{r}
+cor_test(eda, "concern_explain", "concern_safety", , "concern_rights", method = "spearman")
+
+```
+```{r}
+cor_test(eda, "concern_compensat", "concern_accuracy", method = "spearman")
+```
+# Two indepedent samples t-test effect size
+```{r}
+eda %>% rstatix::cohens_d(concern_accuracy ~ concern_explain, var.equal = TRUE)
+```
+
+
+```{r warning=FALSE}
+#stratified correlation
+#grouped dataframes
+
+stats <-eda %>%
+  filter(type=="Academic/research Institution"|type=="EU citizen"|type=="Company/business organisation"|type=="Non-governmental organisation (NGO)") %>% 
+  dplyr::select(type, concern_explain,  requir_purpose) %>%
+  group_by(type) %>%
+  correlation()
+```
+Source: https://easystats.github.io/correlation/
+
+```{r}
+eda %>%
+  group_by(country) %>% 
+  rstatix::get_summary_stats(concern_explain, type = "mean_sd")
+```
+```{r}
+# T-test
+stat.test <- eda %>% 
+  rstatix::t_test(requir_purpose ~ concern_rights, paired = FALSE) 
+stat.test
+#> # A tibble: 1 x 8
+#>   .y.   group1 group2    n1    n2 statistic    df      p
+#> * <chr> <chr>  <chr>  <int> <int>     <dbl> <dbl>  <dbl>
+#> 1 len   OJ     VC        30    30      1.92  55.3 0.0606
+
+# Create a box plot
+p <- ggpubr::ggboxplot(
+  eda, x = "concern_rights", y = "requir_purpose", 
+  color = "concern_rights", palette = "jco", ylim = c(0,40)
+  )
+# Add the p-value manually
+p + ggpubr::stat_pvalue_manual(stat.test, label = "p", y.position = 35)
+```
+
+
+```{r}
+library(janitor)
+library(kableExtra)
+
+stats %>% 
+  kable(caption="Stratified Correlation of Concern for Explainability und Requirement for Purpose") %>%
+  kable_styling(bootstrap_options= c("condensed", "bordered"), full_width= F)
+```
+
+
+```{r}
+library(see) # for plotting
+library(ggraph) # needs to be loaded
+
+subsample <- eda %>% 
+  dplyr::select(concern_safety, concern_rights , concern_discrim,concern_compensat , concern_accuracy, requir_liability, requir_human_oversight )
+
+plot(correlation(subsample))+scale_edge_color_continuous(low = "#000004FF", high = "#FCFDBFFF")
 ```
 
 
@@ -99,13 +306,31 @@ library(correlation)
 library(GGally)
 
 eda %>% 
+ dplyr::select(concern_safety, concern_rights , concern_discrim,concern_compensat , concern_accuracy, concern_explain) %>%
   correlation %>% 
   knitr::kable()
+
 eda %>% 
- dplyr::select((-c(id,abstract, initiative, filename, consult_round, person, org, register, lang, scope, text, lang, size, rules_other))) %>% 
+  dplyr::select(concern_safety, concern_rights , concern_discrim,concern_compensat , concern_accuracy, concern_explain) %>%
   ggcorr(label = TRUE,
          label_round = 2)
 ```
+
+
+```{r}
+eda %>% 
+  dplyr::select(concern_safety, concern_rights , concern_discrim,concern_compensat , concern_accuracy, concern_explain) %>% 
+ggcorr( geom = "circle", nbreaks = 5)
+
+```
+
+
+
+
+
+
+
+
 
 ```{r, warning= FALSE}
 library(broom)
@@ -135,8 +360,8 @@ clrs3 <- c("firebrick4",  "gray70", "darkblue")
 clrs5 <- c("firebrick4", "firebrick1", "gray70", "blue", "darkblue")
 
 eda %>%
-  dplyr::filter(country =="United States" | country == "Germany"| country == "Belgium") %>% 
-  ggplot(aes(x = coop_member_states, color = country)) + 
+  dplyr::filter(country =="United States" | country == "Germany"| country == "France") %>% 
+  ggplot(aes(x =  coop_member_states  , color = country)) + 
   geom_step(aes(y = ..y..), stat = "ecdf") +
   labs(y = "Cumulative Density") + 
   scale_x_discrete(limits = c("1","2","3","4","5"), 
@@ -147,22 +372,30 @@ eda %>%
   theme_bw() 
 ```
 
+
+Problem große Heterogenität der Organisationen, jede erscheint nur 1-2 Mal!! bzw. Missing Organsitations (NA, -)
+Ist das ein Bug im Crawling?
 ```{r}
 eda %>% 
-  dplyr:: group_by( time) %>% 
+  dplyr:: group_by(org) %>% 
   summarise(Frequency = n()) %>% 
-  ggplot(aes(time, Frequency)) + 
-  geom_line()
+  arrange(desc(Frequency))
+
+```
+
+```{r}
+survey_recoded <- eda %>%
+  rowwise() %>%
+  mutate(concern_total = sum(concern_safety, concern_compensat, concern_accuracy, concern_discrim, concern_explain, concern_rights)) %>%
+  ungroup()
 ```
 
 
-
 ```{r}
 
-test <- 
-
-
 eda %>%
+  group_by(time, country, coop_member_states) %>% 
+  summarise(Frequency = n()) %>% 
   dplyr::filter(country =="United States" | country == "Germany"| country == "Belgium") %>% 
   ggplot(aes(coop_member_states, Frequency, 
              fill = coop_member_states, 
@@ -174,9 +407,9 @@ eda %>%
   #scale_fill_manual(values=clrs5) +
 #  scale_color_manual(values=clrs5) +
   # add text and define color
-  geom_text(aes(label=Frequency), vjust=1.6, color="white", 
+ # geom_text(aes(label=Frequency), vjust=1.6, color="white", 
             # define text position and size
-            position = position_dodge(0.9),  size=3.5) +     
+         #   position = position_dodge(0.9),  size=3.5) +     
   theme_bw() +
   theme(axis.text.x=element_blank())
 ```
@@ -186,28 +419,138 @@ eda %>%
 
 lbs <- c("not important at all", "not important", "neutral", "important", "very important")
 
-survey <- eda %>% 
-  dplyr:: select(research_innov,  skills, coop_member_states, SME, uptake_ai, concern_discrim, concern_safety, concern_compensat, concern_explain, concern_rights, concern_accuracy, private_sector, public_sector, eu_data_space, startup_finance, knowhow_transfer) %>% 
+survey_risk <- eda %>% 
+  dplyr:: select(concern_discrim, concern_safety, concern_compensat, concern_explain, concern_rights, concern_accuracy) %>% 
+  
   dplyr::mutate_if(is.character, factor) %>%
   mutate_if(is.numeric, factor, levels = 1:5,  labels = lbs) %>%
   drop_na() %>%
   as.data.frame()
 
 
-likert(survey)
+likert(survey_risk)
 
 ```
 
 
 
 ```{r}
-plot(likert(survey), ordered = T, wrap= 60) + 
-  ggtitle("How important are developments and risks for the legislation")
+survey_requirem <- eda %>% 
+  dplyr:: select(research_innov,  skills, coop_member_states, SME, uptake_ai, private_sector, public_sector, eu_data_space, startup_finance, knowhow_transfer, excel_research, testing_fac, training_skills, lighthouse, net_centres, partner_research, partner_aiproject, benefits_ai, access_testing,equity_finance) %>% 
+ dplyr::mutate_if(is.character, factor) %>%
+  mutate_if(is.numeric, factor, levels = 1:5,  labels = lbs) %>%
+  drop_na() %>%
+  as.data.frame()
+
+
+likert(survey_requirem)
+ 
+```
+```{r group by country and treat as categorical variable}
+
+test <- eda %>% dplyr:: select(country, research_innov,  skills, coop_member_states, SME, uptake_ai, private_sector, public_sector, eu_data_space, startup_finance, knowhow_transfer, excel_research, testing_fac, training_skills, lighthouse, net_centres, partner_research, partner_aiproject, benefits_ai, access_testing,equity_finance) %>% 
+  filter(country =="Germany"| country =="United States"| country =="United Kingdom") %>% 
+ dplyr::mutate_if(is.character, factor) %>%
+  mutate_if(is.numeric, factor, levels = 1:5,  labels = lbs) %>%
+  drop_na() %>%
+  as.data.frame()
+
+
+cluster_plot <- plot(likert(test[,2:4], grouping=test$country)) 
+cluster_plot
 ```
 
 
 ```{r}
+#Source: https://lmudge13.github.io/sample_code/likert_graphs.html
+library(kableExtra)
+items_sum <- summary(likert(test[,2:4]))
 
+
+items_sum %>% 
+  kable(caption="Summary Statistics of skills, research_innov, coop_member_states") %>%
+  kable_styling(bootstrap_options= c("condensed", "bordered"), full_width= F)
+
+```
+
+
+
+
+```{r}
+
+test2 <- eda %>% dplyr:: select(country, concern_discrim, concern_safety, concern_compensat, concern_explain, concern_rights, concern_accuracy) %>% 
+  filter(country =="Germany"| country =="United States"| country =="United Kingdom"| country == "Belgium"|country == "Netherlands"|country == "Italy"| country =="Finland"| country == "Greece") %>% 
+ dplyr::mutate_if(is.character, factor) %>%
+  mutate_if(is.numeric, factor, levels = 1:5,  labels = lbs) %>%
+  drop_na() %>%
+  as.data.frame()
+
+
+cluster_plot2 <- plot(likert(test2[,2:4], grouping=test2$country)) 
+cluster_plot2
+```
+
+
+
+```{r}
+
+test3 <- eda %>% dplyr:: select(country, concern_explain, concern_rights, concern_accuracy) %>% 
+  filter(country =="Germany"| country =="United States"| country =="United Kingdom"| country == "Belgium"|country == "Netherlands"|country == "Italy"| country =="Finland"| country == "Greece") %>% 
+ dplyr::mutate_if(is.character, factor) %>%
+  mutate_if(is.numeric, factor, levels = 1:5,  labels = lbs) %>%
+  drop_na() %>%
+  as.data.frame()
+
+
+cluster_plot2 <- plot(likert(test3[,2:4], grouping=test3$country)) 
+cluster_plot2
+```
+
+
+```{r}
+test5 <- eda %>% dplyr:: select(type, concern_discrim, concern_safety, concern_compensat, concern_explain, concern_rights, concern_accuracy)  %>% 
+ dplyr::mutate_if(is.character, factor) %>%
+  mutate_if(is.numeric, factor, levels = 1:5,  labels = lbs) %>%
+  drop_na() %>%
+  as.data.frame()
+
+
+cluster_plot5 <- plot(likert(test5[,2:4], grouping=test5$type)) 
+cluster_plot5
+```
+
+```{r}
+test6 <- eda %>% dplyr:: select(type, concern_explain, concern_rights, concern_accuracy)  %>% 
+ dplyr::mutate_if(is.character, factor) %>%
+  mutate_if(is.numeric, factor, levels = 1:5,  labels = lbs) %>%
+  drop_na() %>%
+  as.data.frame()
+
+
+cluster_plot6 <- plot(likert(test6[,2:4], grouping=test6$type)) 
+cluster_plot6
+```
+
+
+
+
+
+```{r}
+plot(likert(survey_risk), ordered = T, wrap= 60) + 
+  ggtitle("How important are risks for the legislation")
+```
+
+
+
+
+```{r}
+plot(likert(survey_risk), type = "density")
+```
+
+
+```{r}
+plot(likert(survey_requirem), ordered = T, wrap= 60) + 
+  ggtitle("How important are other requirements for regulation")
 ```
 
 
@@ -218,39 +561,79 @@ Number of submissions per organisation type for three consultation rounds
 
 ```{r}
 eda  %>% 
-    filter(size != "Missing") %>% 
-  count(type,consult_round,  sort = TRUE)  %>% 
-  mutate(size = fct_reorder(type, n)) %>% 
-  ggplot(aes(x = type, y = n, fill = consult_round))+
-  geom_boxplot() +
+  filter(type != "Missing") %>% 
+  count(type, consult_round, sort = TRUE)  %>% 
+  mutate(type = fct_reorder(type, n)) %>% 
+  ggplot(aes(x = type, y = n))+
+  geom_col() +
+ # facet_wrap(~consult_round)+
   coord_flip()
 ```
 
 ```{r same plot as above just with half violin, warning=FALSE}
 library(see)
+
 eda  %>% 
      filter(size != "Missing") %>% 
-     count(type, time, country, consult_round, sort = TRUE)  %>% 
+  filter(country== "Finland"| country== "Poland"| country =="United States"| country=="Germany") %>% 
+     count(type, time, country,requir_human_oversight , consult_round, sort = TRUE)  %>% 
      mutate(country= fct_reorder(country, n)) %>% 
-     ggplot(aes(x = time, y = n, fill = consult_round))+ 
-  geom_violindot(fill_dots = "black") + 
+     ggplot(aes(x = country, y = requir_human_oversight, fill = country))+ 
+  geom_violindot(fill_dots = "black", alpha=.3) + 
   theme_modern()+ 
-  scale_fill_material_d()+
-  coord_flip()
+  scale_fill_material_d()
+ # coord_flip()
 
 ```
+
+
+```{r same plot as above just with half violin, warning=FALSE}
+library(see)
+
+eda  %>% 
+     filter(size != "Missing") %>% 
+  filter(country== "Spain"| country== "Poland"| country =="Czech Republic"| country=="Luxembourg" | country == "Austria") %>% 
+     count(type, time, country,concern_safety, consult_round, sort = TRUE)  %>% 
+     mutate(country= fct_reorder(country, n)) %>% 
+     ggplot(aes(x = country, y = concern_safety, fill = country))+ 
+  geom_violindot(fill_dots = "black", alpha=.3) + 
+  theme_modern()+ 
+  scale_fill_material_d()
+ # coord_flip()
+
+```
+
+
+```{r same plot as above just with half violin, warning=FALSE}
+library(see)
+
+eda  %>% 
+     filter(size != "Missing") %>% 
+  filter(country== "Spain"| country== "Poland"| country =="Czech Republic"| country=="Luxembourg" | country == "Austria") %>% 
+     count(type, time, country, concern_discrim, consult_round, sort = TRUE)  %>% 
+     mutate(country= fct_reorder(country, n)) %>% 
+     ggplot(aes(x = country, y = concern_discrim, fill = country))+ 
+  geom_violindot(fill_dots = "black", alpha=.3) + 
+  theme_modern()+ 
+  scale_fill_material_d()
+ # coord_flip()
+
+```
+
+
 
 During the three submission rounds which countries and size of organisations submitted most often
 ```{r}
 eda %>% 
-  group_by(size, country, consult_round) %>%
+  group_by(country, consult_round, concern_compensat) %>%
   filter(size != "Missing") %>% 
 mutate(count = n()) %>% 
-   ggplot(aes(x = country, y = count, colour = size , group = country )) +
-  geom_count() +
+   ggplot(aes(x = country, y = concern_compensat )) +
+  geom_point() +
+ # geom_jitter(alpha=.3)+
   coord_flip()+
  # geom_line() +
-  facet_wrap(~consult_round) +
+#  facet_wrap(~consult_round) +
   theme_bw() +
   labs(y = "submission count", x = "Organizatin size")+
   theme (legend.position = "right")
@@ -348,7 +731,7 @@ eda %>%
   group_by(country) %>% 
    mutate(count = n()) %>% 
   filter(country != "is.na") %>% 
-  ggplot(aes(count,country, fill= consult_round))+
+  ggplot(aes(consult_round, country, fill= consult_round))+
   geom_density_ridges(alpha= .5)+
   geom_jitter(width = 0, height =.1, alpha= .25)+
  # facet_wrap(~consult_round)+
@@ -373,10 +756,11 @@ summary(table(eda$type, eda$size)) # chi-square test
  # geom_point()+ 
  # geom_smooth(method= "lm")
 ```
+###############################
 
+#Text Data Analysis
 
-
-
+###############################
 ```{r}
 token <- eda %>%
   dplyr::select(id, text, time, type, org, size,
@@ -385,6 +769,11 @@ token <- eda %>%
   anti_join(stop_words, by = "word")
 ```
 
+```{r}
+library(textdata)
+
+lexicon_nrc_vad
+```
 
 
 
@@ -424,7 +813,7 @@ library(ggplot2)
 ggplot(sentiment, aes(consult_round, sentiment, fill =consult_round)) +
   geom_boxplot(show.legend = FALSE) +
   coord_flip() +
-    facet_wrap(vars(country))+
+    facet_wrap(vars(type))+
   labs(x = "Organization Types",
        y = "Bing Sentiment Scores")
 
@@ -544,7 +933,55 @@ bigrams_united <- bigrams_filtered %>%
 
 bigrams_united
 
+
+country_bigram <- bigrams_united %>% 
+  count(bigram, country, sort = TRUE)
+
+
 ```
+
+```{r}
+bigram_counts %>% 
+        filter(word1 == "risk")
+```
+
+```{r}
+library(widyr)
+(word_cor <- token %>%
+   group_by(word) %>%
+   filter(n() >= 20) %>%
+   pairwise_cor(word, type) %>%
+   filter(!is.na(correlation)))
+```
+
+
+```{r}
+word_cor %>%
+  filter(item1 == "discrimination") %>%
+  arrange(desc(correlation))
+```
+
+
+```{r}
+word_cor %>% 
+  filter(correlation > .65) %>%
+graph_from_data_frame() %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = correlation), show.legend = FALSE) +
+  geom_node_point(color = "lightblue", size = 5) +
+  geom_node_text(aes(label = name), repel = TRUE) +
+  theme_void()
+```
+
+```{r}
+set.seed(123)
+bigram_graph <- word_cor  %>%
+   filter(correlation > .65)
+  graph_from_data_frame()
+```
+
+
+
 
 
 ```{r}
@@ -560,10 +997,10 @@ library(forcats)
 library(ggforce)
 #source:https://www.tidytextmining.com/tfidf.html
 
-bigram_tf_idf %>%
+uk <- bigram_tf_idf %>%
   group_by(country) %>%
   filter(country == "United Kingdom") %>% # I filtered for 1 country, remove this if all countries wanted
-  filter (bigram != "13 november", bigram != "accessed 13") %>% 
+  filter (bigram != "13 november", bigram != "accessed 13", bigram != "getty images", bigram != "ref ess", bigram != "project ref", bigram != "loughborough university", bigram != "persuasive design", bigram != "ukri project", bigram != " ai systems", bigram != "university ukri", bigram != "yeung response", bigram != "ai systems", bigram != "supplementary processing") %>% 
   slice_max(tf_idf, n = 9) %>%
   ungroup() %>%
   ggplot(aes(tf_idf, fct_reorder(bigram, tf_idf), fill = country)) +
@@ -571,12 +1008,17 @@ bigram_tf_idf %>%
  # facet_wrap_paginate(~ country, ncol = 2, nrow = 2, scales = "free", page = 7) +
   labs(x = "tf-idf", y = NULL)
 ```
+```{r}
+bigram_tf_idf %>% dplyr::select(country) %>% distinct() %>% print(n=40)
+```
+
+
 
 ```{r}
-bigram_tf_idf %>%
+us <- bigram_tf_idf %>%
   group_by(country) %>%
   filter(country == "United States") %>% # I filtered for 1 country, remove this if all countries wanted
-filter (bigram != "ieee global", bigram != "systems nlaw", bigram != "4.0 united", bigram != "noncommercial 4.0", bigram !="nfurther resources") %>% 
+filter (bigram != "ieee global", bigram != "systems nlaw", bigram != "4.0 united", bigram != "noncommercial 4.0", bigram !="nfurther resources",bigram != "attributionnoncommercial united", bigram != "commons attributionnoncommercial", bigram != "impo ant", bigram != "ais creators", bigram != "creative commons", bigram != "systems ais", bigram != "proposed rules", bigram != "cent ieee", bigram != "embedding values", bigram != "classical ethics", bigram != "aligned design", bigram != "systems classical", bigram != "eline chivot", bigram != "riskassessment framework", bigram != "ieee standards") %>% 
   slice_max(tf_idf, n = 9) %>%
   ungroup() %>%
   ggplot(aes(tf_idf, fct_reorder(bigram, tf_idf), fill = country)) +
@@ -588,10 +1030,10 @@ filter (bigram != "ieee global", bigram != "systems nlaw", bigram != "4.0 united
 
 
 ```{r}
-bigram_tf_idf %>%
+ireland <- bigram_tf_idf %>%
   group_by(country) %>%
   filter(country == "Ireland") %>% #I filtered for 1 country, remove this if all countries wanted
-filter (bigram != "ieee global", bigram != "systems nlaw", bigram != "4.0 united", bigram != "noncommercial 4.0", bigram !="nfurther resources") %>% 
+filter (bigram != "ieee global", bigram != "systems nlaw", bigram != "4.0 united", bigram != "noncommercial 4.0", bigram !="nfurther resources", bigram !="mdr ivdr", bigram !="proposed ai", bigram !="visited june", bigram !="cent intensify", bigram !="accessed june", bigram !="forward recommendations", bigram !="ibec response",bigram !="rai team") %>% 
   slice_max(tf_idf, n = 9) %>%
   ungroup() %>%
   ggplot(aes(tf_idf, fct_reorder(bigram, tf_idf), fill = country)) +
@@ -600,6 +1042,51 @@ filter (bigram != "ieee global", bigram != "systems nlaw", bigram != "4.0 united
   labs(x = "tf-idf", y = NULL)
 
  #ggsave("featuregraph.png",c,  width = 9, height = 6, units = "in")
+```
+
+```{r}
+Belg <-bigram_tf_idf %>%
+  group_by(country) %>%
+  filter(country == "Belgium") %>% #I filtered for 1 country, remove this if all countries wanted
+filter (bigram != "cent cent", bigram != "ai act", bigram != "proposalfor ai", bigram != "commissions proposalfor", bigram != "avenue des", bigram != "ai systems", bigram != "claire response", bigram != "access nows", bigram != "des arts", bigram != "nows submission", bigram != "app association", bigram != "brussels belgium", bigram != "aisbl avenue", bigram != "annex iii", bigram != "belgium eu", bigram != "european commissionsadoption", bigram != "commissionsadoption consultation", bigram != "edpsedpb joint", bigram != "semi europe", bigram != "revised white") %>% 
+  slice_max(tf_idf, n = 9) %>%
+  ungroup() %>%
+  ggplot(aes(tf_idf, fct_reorder(bigram, tf_idf), fill = country)) +
+  geom_col(show.legend = FALSE) +
+ # facet_wrap_paginate(~ country, ncol = 2, nrow = 2, scales = "free", page = 7) 
+  labs(x = "tf-idf", y = NULL)
+```
+
+```{r}
+bigram_tf_idf <- bigrams_united %>%
+  count(type, bigram) %>%
+  bind_tf_idf(bigram, type, n) %>%
+  arrange(desc(tf_idf))
+
+```
+
+
+
+```{r}
+business <-bigram_tf_idf %>%
+  group_by(type) %>%
+  filter(type == "Non-EU Citizen" | type== "Academic/research Institution") %>% #I filtered for 1 country, remove this if all countries wanted
+filter (bigram != "riskassessment framework", bigram != "fujitsu limited", bigram != "social science", bigram != "chuo university", bigram != "limited position", bigram != "sendhil mullainathan", bigram != "science research", bigram != "limited position",bigram != "supra note", bigram != "electronic copy", bigram != "supplementary processing", bigram != "journal draft", bigram != "draft vol", bigram != "forthcoming affinity", bigram != "montreal ai", bigram != "de la", bigram != "berkeley technology", bigram != "visited mar", bigram != "yeung response" , bigram != "bullock justin", bigram != "fat association", bigram != "page feedback", bigram != "und aes", bigram != "usa doi",bigram != "cent cent", bigram != "attributionnoncommercial united", bigram != "commons attributionnoncommercial", bigram != "iee gloabl", bigram != "creative commons", bigram != "ais creators", bigram != "ieee global", bigram != "systems nlaw", bigram != "4.0 united", bigram != "noncommercial 4.0", bigram !="nfurther resources",bigram != "attributionnoncommercial united", bigram != "commons attributionnoncommercial", bigram != "impo ant", bigram != "ais creators", bigram != "creative commons", bigram != "systems ais", bigram != "proposed rules", bigram != "cent ieee", bigram != "embedding values", bigram != "classical ethics", bigram != "aligned design", bigram != "systems classical", bigram != "eline chivot", bigram != "riskassessment framework", bigram != "ieee standards", bigram != "fur systeme")  %>% 
+  slice_max(tf_idf, n = 9) %>%
+  ungroup() %>%
+  ggplot(aes(tf_idf, fct_reorder(bigram, tf_idf), fill = type)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap_paginate(~ type, ncol = 2, nrow = 2, scales = "free", page = 1) 
+  labs(x = "tf-idf", y = NULL)
+```
+
+
+```{r}
+ library(ggpubr)
+theme_set(theme_pubr()) 
+ggarrange(us,ireland,uk,Belg,
+            labels = c("1", "2", "3", "4"),
+            ncol = 2, nrow = 2)
 ```
 
 
@@ -611,37 +1098,26 @@ filter (bigram != "ieee global", bigram != "systems nlaw", bigram != "4.0 united
 
 
 ```{r correlation, warning=FALSE}
-library(widyr)
- words_by_type <- token %>%
-    count(consult_round, word, sort = TRUE) %>%
-    ungroup()
+#library(widyr)
+# words_by_type <- token %>%
+#    count(consult_round, word, sort = TRUE) %>%
+#    ungroup()
+# ec_cors <- words_by_type %>% 
+#    pairwise_cor(consult_round, word, n, sort = TRUE)
 
+#library(ggraph)
+#library(igraph)
+#set.seed(2017)
 
- ec_cors <- words_by_type %>% 
-    pairwise_cor(consult_round, word, n, sort = TRUE)
- 
-
- 
-library(ggraph)
-library(igraph)
-set.seed(2017)
-
-ec_cors %>%
-  filter(correlation > .8) %>%
-  graph_from_data_frame() %>%
-  ggraph(layout = "fr") +
-  geom_edge_link(aes(alpha = correlation, width = correlation)) +
-  geom_node_point(size = 3, color = "lightblue") +
-  geom_node_text(aes(label = name), repel = TRUE) +
-  theme_void()
+#ec_cors %>%
+#  filter(correlation > .8) %>%
+#  graph_from_data_frame() %>%
+#  ggraph(layout = "fr") +
+#  geom_edge_link(aes(alpha = correlation, width = correlation)) +
+#  geom_node_point(size = 3, color = "lightblue") +
+#  geom_node_text(aes(label = name), repel = TRUE) +
+#  theme_void()
 ```
-
-
-
-
-
-
-
 
 
 
@@ -651,9 +1127,9 @@ ec_cors %>%
 ```{r}
 library(igraph)
 bigram_graph <- bigram_counts %>%
-  filter(n > 20) %>%
+  filter(n > 100) %>%
   graph_from_data_frame()
-
+##############################
 library(ggraph)
 set.seed(2017)
 
@@ -661,6 +1137,54 @@ ggraph(bigram_graph, layout = "fr") +
   geom_edge_link() +
   geom_node_point() +
   geom_node_text(aes(label = name), vjust = 1, hjust = 1)
+
+##2nd graph occurence frequency, directed graph
+set.seed(2020)
+
+a <- grid::arrow(type = "closed", length = unit(.15, "inches"))
+
+ggraph(bigram_graph, layout = "fr") +
+  geom_edge_link(aes(edge_alpha = n), show.legend = TRUE,
+                 arrow = a, end_cap = circle(.07, 'inches'),edge_colour = "tomato") +
+  geom_node_point(color = "lightblue", size = 3) +
+  geom_node_text(aes(label = name), vjust = -1, hjust = 1) +
+  theme_void()
+
+```
+
+```{r}
+library(igraph)
+bigram_graph <- country_bigram  %>%
+  filter(n > 100) %>%
+  graph_from_data_frame()
+
+```
+
+```{r}
+set.seed(2020)
+
+a <- grid::arrow(type = "closed", length = unit(.15, "inches"))
+
+ggraph(bigram_graph, layout = "fr") +
+  geom_edge_link(aes(edge_alpha = n), show.legend = TRUE,
+                 arrow = a, end_cap = circle(.07, 'inches'),edge_colour = "tomato") +
+  geom_node_point(color = "lightblue", size = 3) +
+  geom_node_text(aes(label = name), vjust = 1, hjust = -1) +
+  theme_void()
+```
+
+
+```{r}
+type_bigram <- bigrams_united %>% 
+  count(bigram, type, sort = TRUE)
+```
+
+
+```{r}
+library(igraph)
+bigram_graph <- type_bigram  %>%
+  filter(n > 100) %>%
+  graph_from_data_frame()
 
 
 set.seed(2020)
@@ -670,12 +1194,18 @@ a <- grid::arrow(type = "closed", length = unit(.15, "inches"))
 ggraph(bigram_graph, layout = "fr") +
   geom_edge_link(aes(edge_alpha = n), show.legend = TRUE,
                  arrow = a, end_cap = circle(.07, 'inches'),edge_colour = "tomato") +
-  geom_node_point(color = "lightblue", size = 3) +
+  geom_node_point(color = "lightblue", size = 3,repel = TRUE) +
   geom_node_text(aes(label = name), vjust = 1, hjust = 1) +
   theme_void()
 
-
 ```
+
+
+
+
+
+
+
 
 
 ```{r, warning = FALSE, message = F}
@@ -683,7 +1213,9 @@ library(textfeatures) #extract features
 library(skimr) #summary statistics
 library(data.table)
 
-eda$ec_features <- textfeatures(eda$text, word_dims = 0,  sentiment = TRUE, normalize = FALSE) #word2vec_dims
+#normalize Logical indicating whether to normalize (mean center, sd = 1) features. Defaults to TRUE.
+
+eda$ec_features <- textfeatures(eda$text, word_dims = 0,  sentiment = TRUE, normalize = FALSE, verbose = TRUE) #word2vec_dims is normalize, disabled here
 
 eda <- as.data.table (eda) %>% 
   as_tibble(eda)
@@ -700,6 +1232,34 @@ min_var <- function(x, min = 1) {
 
 ```
 
+```{r}
+eda %>% 
+  ggplot(aes(ec_features.n_polite, ec_features.n_words  , colour = country)) + geom_point() 
+
+
+eda %>% 
+  ggplot(aes(ec_features.n_polite, ec_features.n_words  , colour = type)) + geom_point() 
+```
+
+```{r}
+
+#.n_polite -> Summed sentiment value calculated using politeness_dict
+#n_words Number of words
+eda %>% 
+  filter(country=="Germany"|country=="United States"|country=="Italy"|country=="United Kingdom") %>% 
+  ggplot(aes(ec_features.n_polite , ec_features.n_words)) + geom_point(alpha=.6) +
+  facet_wrap(~country) +
+  geom_smooth(method = "gam")   #stat_smooth()
+
+
+
+#scale_count: Transforms integer and integerlike columns using log
+#scale_log: Transforms numeric columns using log
+#scale_normal: Transforms numeric columns using mean centering and dividing by standard dev
+
+```
+
+
 
 
 ```{r summary}
@@ -713,9 +1273,10 @@ min_var() %>%
 
 ```{r}
 eda %>% 
+  filter(country!= "NA") %>% 
   ggplot(aes(ec_features.sent_vader,country, color = country)) + 
-  geom_boxplot(show.legend = FALSE)+ 
-  facet_wrap(~ consult_round)
+  geom_boxplot(show.legend = FALSE)
+  #facet_wrap(~ consult_round)
   
 
 ```
@@ -728,7 +1289,7 @@ a <-eda %>%
   filter(!ec_features.sent_vader > 3000) %>% 
     ggplot(aes(type, ec_features.sent_vader, color = type)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "lightgray") + 
-  geom_boxplot(alpha = 0.8, show.legend = FALSE) +
+  geom_boxplot(alpha = 0.6, show.legend = FALSE) +
   theme(text = element_text(size=8))+
   coord_flip()+
     ylim(-200, 600)
@@ -974,15 +1535,44 @@ reg_linear %>%
 
 
 ```{r}
-three_submission %>% 
-  group_by(consult_round, country) %>% 
-  count(sort = TRUE) 
+library(vader)
+subsample <- eda %>%dplyr::select(text, id, country, type, org) %>% sample_n(5)
 
-
-
+extract <- subsample %>%  
+  vader_df(text)
 ```
 
 
+returns: A df containing the valence score for each word; 
+-an overall, compound valence score for the text-> -1 (most extreme negative) and +1 (most extreme positive) 
+- weighted percentage of positive, negative, and neutral words 
+- frequency of "but".
+
+```{r}
+joinedvader <- left_join(extract, subsample) %>% as_tibble()
+```
+```{r}
+joinedvader %>% 
+  filter(type!= "NA") %>% 
+  ggplot(aes(neg,country, fill = country)) + 
+  theme_classic() +
+  geom_boxplot(show.legend = FALSE)
+
+
+  
+```
+
+
+```{r}
+sample <- eda 
+
+extract <- sample %>%  
+  vader_df(text)
+```
+
+
+
+#SOURCE: https://dgarcia-eu.github.io/SocialDataScience/3_Affect/035_UnsupervisedToolsR/UnsupervisedToolsR.html
 
 
 
