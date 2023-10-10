@@ -26,16 +26,8 @@ It contains data on three public consultation rounds where (business, academic, 
 - *n* = 440 pdfs (*n* = 1216 total submissions) 
 - Feedback period: 2020-02-20  — 2020-06-14
 
-## Installation
-
-Install my-project with npm
-
-```bash
-pip install selenium
-pip install pdfplumber
-pip install deep-translator
-pip install bertopic
-```
+## Workflow
+![alt text](https://github.com/nika-akin/EC-Web-Scrapping-and-Text-Mining/blob/main/workflow.png)
     
 ## Acknowledgements
 
