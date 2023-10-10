@@ -26,10 +26,14 @@ library(dplyr)
 library(correlation)
 here()
 #eda <- readRDS("three_submission.rds")  
-use 'renv'
-consult_text_clean <- readRDS("C:/Users/batzdova/Desktop/EC-Web-Scrapping-and-Text-Mining/consult_text_clean.rds")
+#use 'renv'
 
-eda <- consult_text_clean
+#consult_text_clean <- readRDS("C:/Users/batzdova/Desktop/EC-Web-Scrapping-and-Text-Mining/consult_text_clean.rds")
+
+#eda <- consult_text_clean
+
+eda <-  read_csv("C:/Users/batzdova/Desktop/TRANSL~1/AUGM_T~1.CSV")
+
 ```
 ```{r}
 #load libraries
@@ -40,9 +44,7 @@ library(GGally) #masks dbplyr::nasa
 library(kableExtra) #masks dplyr::group_rows
 library(MVN)
 ```
-```{r}
 
-```
 
 
 
@@ -55,17 +57,6 @@ library(MVN)
                     title = "Pairs Plot of Human-Machine Items"))
 
 ```
-
-
-```{r}
-```
-
-
-
-
-
-
-
 
 
 
@@ -177,6 +168,20 @@ eda %>%
     facet_grid(~country) +
     scale_y_continuous(labels = scales::percent)
 ```
+
+
+A quick look in the codebook on the item meaning.
+```{r}
+
+codebook_survey_consult_roundone %>% print(n=70)
+
+cat(paste(codebook_survey_consult_roundone[36, ], collapse = " "), "\n")
+```
+
+
+
+
+
 
 
 ```{r}
@@ -394,14 +399,15 @@ survey_recoded <- eda %>%
 ```{r}
 
 eda %>%
-  group_by(time, country, coop_member_states) %>% 
+  group_by(level_of_interest , country, coop_member_states) %>% 
   summarise(Frequency = n()) %>% 
   dplyr::filter(country =="United States" | country == "Germany"| country == "Belgium") %>% 
+  dplyr::filter(!is.na(level_of_interest )) %>% 
   ggplot(aes(coop_member_states, Frequency, 
-             fill = coop_member_states, 
-             color = coop_member_states)) +
+             fill = level_of_interest, 
+             color = level_of_interest)) +
   facet_grid(~country) +
-  geom_bar(stat="identity", position=position_dodge()) +
+  geom_point(stat="identity", position=position_dodge()) +
   geom_line() +
   # define colors
   #scale_fill_manual(values=clrs5) +
@@ -446,9 +452,11 @@ survey_requirem <- eda %>%
 likert(survey_requirem)
  
 ```
+
 ```{r group by country and treat as categorical variable}
 
-test <- eda %>% dplyr:: select(country, research_innov,  skills, coop_member_states, SME, uptake_ai, private_sector, public_sector, eu_data_space, startup_finance, knowhow_transfer, excel_research, testing_fac, training_skills, lighthouse, net_centres, partner_research, partner_aiproject, benefits_ai, access_testing,equity_finance) %>% 
+test <- eda %>% 
+  dplyr:: select(country, research_innov,  skills, coop_member_states, SME, uptake_ai, private_sector, public_sector, eu_data_space, startup_finance, knowhow_transfer, excel_research, testing_fac, training_skills, lighthouse, net_centres, partner_research, partner_aiproject, benefits_ai, access_testing,equity_finance) %>% 
   filter(country =="Germany"| country =="United States"| country =="United Kingdom") %>% 
  dplyr::mutate_if(is.character, factor) %>%
   mutate_if(is.numeric, factor, levels = 1:5,  labels = lbs) %>%
@@ -479,7 +487,7 @@ items_sum %>%
 ```{r}
 
 test2 <- eda %>% dplyr:: select(country, concern_discrim, concern_safety, concern_compensat, concern_explain, concern_rights, concern_accuracy) %>% 
-  filter(country =="Germany"| country =="United States"| country =="United Kingdom"| country == "Belgium"|country == "Netherlands"|country == "Italy"| country =="Finland"| country == "Greece") %>% 
+  filter(country =="Germany"| country =="United States"| country =="United Kingdom"|country == "Netherlands"|country == "Italy"| country =="Finland"| country == "Greece") %>% 
  dplyr::mutate_if(is.character, factor) %>%
   mutate_if(is.numeric, factor, levels = 1:5,  labels = lbs) %>%
   drop_na() %>%
@@ -490,7 +498,12 @@ cluster_plot2 <- plot(likert(test2[,2:4], grouping=test2$country))
 cluster_plot2
 ```
 
+```{r}
 
+codebook_survey_consult_roundone %>% print(n=70)
+
+cat(paste(codebook_survey_consult_roundone[36, ], collapse = " "), "\n")
+```
 
 ```{r}
 
@@ -762,10 +775,11 @@ summary(table(eda$type, eda$size)) # chi-square test
 
 ###############################
 ```{r}
+library(tidytext)
 token <- eda %>%
-  dplyr::select(id, text, time, type, org, size,
+  dplyr::select(id, integr_txt, time, type, org, size,
         country, consult_round) %>%
-  unnest_tokens(word, text) %>%
+  unnest_tokens(word, integr_txt) %>%
   anti_join(stop_words, by = "word")
 ```
 
@@ -907,7 +921,7 @@ geom_point(show.legend = TRUE)
 
 ```{r}
 ec_bigrams <- eda %>%
-  unnest_tokens(bigram, text, token = "ngrams", n = 2) %>%
+  unnest_tokens(bigram, integr_txt, token = "ngrams", n = 2) %>%
   filter(!is.na(bigram))
 
 ec_bigrams %>% count(bigram, sort=TRUE)
@@ -1215,7 +1229,7 @@ library(data.table)
 
 #normalize Logical indicating whether to normalize (mean center, sd = 1) features. Defaults to TRUE.
 
-eda$ec_features <- textfeatures(eda$text, word_dims = 0,  sentiment = TRUE, normalize = FALSE, verbose = TRUE) #word2vec_dims is normalize, disabled here
+eda$ec_features <- textfeatures(eda$integr_txt, word_dims = 0,  sentiment = TRUE, normalize = FALSE, verbose = TRUE) #word2vec_dims is normalize, disabled here
 
 eda <- as.data.table (eda) %>% 
   as_tibble(eda)
@@ -1573,6 +1587,48 @@ extract <- sample %>%
 
 
 #SOURCE: https://dgarcia-eu.github.io/SocialDataScience/3_Affect/035_UnsupervisedToolsR/UnsupervisedToolsR.html
+
+
+```{r}
+ec %>% 
+  dplyr::select(interests_represented) %>% 
+  unique()
+```
+
+```{r}
+ec %>% 
+   group_by(risk_procedure ) %>% 
+  unique()
+
+```
+
+
+
+
+
+
+```{r}
+ec %>% 
+  group_by(risk_spec) %>% 
+  count()
+```
+```{r}
+ec %>% 
+  dplyr::select(highrisk_approach ) %>% 
+  unique()
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
