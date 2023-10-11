@@ -45,6 +45,71 @@ library(kableExtra) #masks dplyr::group_rows
 library(MVN)
 ```
 
+```{r}
+# how can I compute in R for 5  different variables that all start with "concern_" how many respondents responded to it what the mean is?
+
+#Compute new aggregate variables
+eda %>%
+  mutate(concern_sum = rowSums(across(
+    concern_safety:concern_accuracy))) %>% 
+  mutate(concern_mean = rowMeans(across(
+    concern_safety:concern_accuracy))) %>% 
+  dplyr::select(concern_sum, concern_mean)
+
+```
+
+
+```{r}
+library(datawizard)
+library(stargazer)
+library(flextable)
+
+
+concern_columns <- eda[, grepl("^concern_", names(eda))]
+
+
+concern <- eda %>%
+  dplyr::select(c(concern_accuracy, concern_discrim, concern_explain, concern_safety, concern_rights, concern_compensat)) %>%
+  describe_distribution(quartiles = FALSE) %>% 
+  as_tibble()
+
+
+eda %>%
+  dplyr::select(c(concern_accuracy, concern_discrim, concern_explain, concern_safety, concern_rights, concern_compensat)) %>%
+  as.data.frame() %>% 
+  stargazer(type = "text",
+            digits = 2,
+            title="Descriptive statistics",
+            out = "tabl.txt")  %>% 
+  as_flextable() %>% 
+  save_as_docx("Sample descriptives" = .,
+               path = "C:/Users/batzdova/Documents.docx")
+
+#export table 
+concern %>% 
+  as_flextable() %>% 
+  save_as_docx("Sample descriptives",
+               path = "C:/Users/batzdova/Desktop/sample.docx")
+
+##################################################################
+
+eda %>%
+  dplyr::select((where(is.numeric))) %>%
+  describe_distribution(quartiles = TRUE)
+
+
+```
+
+
+
+
+```{r}
+round(prop.table(ftable(eda$type, eda$concern_explain), 2)*100, 2) # column percentages
+```
+
+
+
+
 
 
 
