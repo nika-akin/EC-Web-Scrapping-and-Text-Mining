@@ -33,7 +33,7 @@ It contains data on three public consultation rounds where (business, academic, 
 
 ## Feedback
 
-If you have any feedback, please reach out to us at veronika.batzdorfer@gesis.org
+If you have any feedback, please reach out to us at veronika.batzdorfer@kit.edu
 
 
 
